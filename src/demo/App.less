@@ -1,0 +1,74 @@
+.grid-drag-resize {
+  padding: 10px;
+}
+
+.page {
+  display: grid;
+  grid-template: 1fr/1fr 2fr 30px 2fr 1fr;
+  height: 100vh;
+  padding: 16px;
+  gap: 10px;
+
+  & > section {
+    overflow: auto;
+    border: 1px solid #666;
+  }
+}
+
+.demo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 10px;
+  color: #fff;
+  line-height: 1.1em;
+}
+
+.group {
+  padding: 10px;
+  border: 1px solid #61bc84;
+
+  &::before {
+    content: 'Group 3 x 3';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%, -50%);
+    color: #999;
+    text-align: center;
+  }
+}
+
+.group-undroppable {
+  padding: 10px;
+  border: 1px solid #999;
+
+  &::before {
+    content: 'Group but undroppable in';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%, -50%);
+    color: #999;
+    text-align: center;
+  }
+}
+
+.group-readonly {
+  padding: 10px;
+  border: 1px solid #999;
+
+  &::before {
+    content: 'Group but readonly';
+    position: absolute;
+    top: 0%;
+    left: 0%;
+    width: 100%;
+    color: #999;
+    text-align: center;
+  }
+}
