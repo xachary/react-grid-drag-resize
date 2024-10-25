@@ -16,153 +16,235 @@ type GridDragResizeItemComponent = GridDragResizeItemProps & {
   style?: CSSProperties
 } & DOMAttributes<HTMLDivElement>
 
-import { GridDragResizeContext, type GridDragResizeContextType } from './context'
+import { GridDragResizeContext } from './context'
+
+import GridDragResize from './GridDragResize'
 
 export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
-  // console.log('GridDragResizeItem', props)
-
+  // 穿透上下文
   const context = useContext(GridDragResizeContext)
 
-  const columnsParsed = useMemo(() => props?.columns || 1, [props?.columns])
-  const rowsParsed = useMemo(() => props?.rows || 1, [props?.rows])
+  // Props 转 useRef
+  const columnsParsed = useRef(1)
+  const rowsParsed = useRef(1)
+  const columnStartParsed = useRef(1)
+  const columnEndParsed = useRef(2)
+  const rowStartParsed = useRef(1)
+  const rowEndParsed = useRef(2)
+  const dragHandlerParsed = useRef<string | undefined>()
+  const dropOutHandlerParsed = useRef<string | undefined>()
+  const removeHandlerParsed = useRef<string | undefined>()
+  const overflowParsed = useRef<string | undefined>()
+  const readonlyParsed = useRef<boolean | undefined>()
+  const draggableParsed = useRef<boolean | undefined>()
+  const resizableParsed = useRef<boolean | undefined>()
+  const removableParsed = useRef<boolean | undefined>()
+  const droppableOutParsed = useRef<boolean | undefined>()
+  const debugParsed = useRef<boolean | undefined>()
+  const parentPropsParsed = useRef<GridDragResizeItemProps | undefined>()
 
-  const columnStartParsed = useMemo(
-    () => ((props?.columnStart ?? 0) < 1 ? 1 : props?.columnStart),
-    [props?.columnStart]
-  )
-  const columnEndParsed = useMemo(
-    () => ((props?.columnEnd ?? 0) < 2 ? 2 : props?.columnEnd),
-    [props?.columnEnd]
-  )
-  const rowStartParsed = useMemo(
-    () => ((props?.rowStart ?? 0) < 1 ? 1 : props?.rowStart),
-    [props?.rowStart]
-  )
-  const rowEndParsed = useMemo(
-    () => ((props?.rowEnd ?? 0) < 2 ? 2 : props?.rowEnd),
-    [props?.rowEnd]
-  )
+  // Props 的 useRef 默认值处理
+  const draggableDefault = useRef<boolean | undefined>()
+  const resizableDefault = useRef<boolean | undefined>()
+  const removableDefault = useRef<boolean | undefined>()
+  const droppableOutDefault = useRef<boolean | undefined>()
 
-  // 穿透 Props 处理
-  const dragHandlerParsed = useMemo(
-    () => props?.dragHandler || context?.gird?.props.dragHandler,
-    [props?.dragHandler, context?.gird?.props.dragHandler]
-  )
-  const dropOutHandlerParsed = useMemo(
-    () => props?.dropOutHandler || context?.gird?.props.dropOutHandler,
-    [props?.dropOutHandler, context?.gird?.props.dropOutHandler]
-  )
-  const removeHandlerParsed = useMemo(
-    () => props?.removeHandler || context?.gird?.props.removeHandler,
-    [props?.removeHandler, context?.gird?.props.removeHandler]
-  )
-  const overflowParsed = useMemo(
-    () => props?.overflow || context?.gird?.props.overflow,
-    [props?.overflow, context?.gird?.props.overflow]
-  )
-  //
-  const readonlyParsed = useMemo(
-    () => props?.readonly ?? context?.gird?.props.readonly,
-    [props?.readonly, context?.gird?.props.readonly]
-  )
-  //
-  const draggableParsed = useMemo(
-    () => (readonlyParsed ? false : (props?.draggable ?? context?.gird?.props.draggable)),
-    [readonlyParsed, props?.draggable, context?.gird?.props.draggable]
-  )
-  const resizableParsed = useMemo(
-    () => (readonlyParsed ? false : (props?.resizable ?? context?.gird?.props.resizable)),
-    [readonlyParsed, props?.resizable, context?.gird?.props.resizable]
-  )
-  const removableParsed = useMemo(
-    () => (readonlyParsed ? false : (props?.removable ?? context?.gird?.props.removable)),
-    [readonlyParsed, props?.removable, context?.gird?.props.removable]
-  )
-  const droppableOutParsed = useMemo(
-    () =>
-      readonlyParsed
-        ? false
-        : (context?.gird?.props?.droppableOut ??
-          props?.droppableOut ??
-          context?.gird?.props.droppableOut),
-    [readonlyParsed, props?.droppableOut, context?.gird?.props.droppableOut]
-  )
-  //
-  const debugParsed = useMemo(
-    () => props?.debug ?? context?.gird?.props.debug,
-    [props?.debug, context?.gird?.props.debug]
-  )
+  useEffect(() => {
+    columnsParsed.current = props.columns || 1
+    rowsParsed.current = props.rows || 1
+    columnStartParsed.current = ((props.columnStart ?? 0) < 1 ? 1 : props.columnStart)!
+    columnEndParsed.current = ((props.columnEnd ?? 0) < 2 ? 2 : props.columnEnd)!
+    rowStartParsed.current = ((props.rowStart ?? 0) < 1 ? 1 : props.rowStart)!
+    rowEndParsed.current = ((props.rowEnd ?? 0) < 2 ? 2 : props.rowEnd)!
+    dragHandlerParsed.current = props.dragHandler || props.parentProps?.dragHandler
+    dropOutHandlerParsed.current = props.dropOutHandler || props.parentProps?.dropOutHandler
+    removeHandlerParsed.current = props.removeHandler || props.parentProps?.removeHandler
+    overflowParsed.current = props.overflow || props.parentProps?.overflow
+    readonlyParsed.current = props.readonly ?? props.parentProps?.readonly
+    draggableParsed.current = readonlyParsed.current
+      ? false
+      : (props.draggable ?? props.parentProps?.draggable)
+    draggableDefault.current = draggableParsed.current ?? true
+    resizableParsed.current = readonlyParsed.current
+      ? false
+      : (props.resizable ?? props.parentProps?.resizable)
+    resizableDefault.current = resizableParsed.current ?? true
+    removableParsed.current = readonlyParsed.current
+      ? false
+      : (props.removable ?? props.parentProps?.removable)
+    removableDefault.current = removableParsed.current ?? true
+    droppableOutParsed.current = readonlyParsed.current
+      ? false
+      : (props.droppableOut ?? props.parentProps?.droppableOut)
+    droppableOutDefault.current = droppableOutParsed.current ?? true
+    debugParsed.current = props.debug ?? props.parentProps?.debug
+    parentPropsParsed.current = { ...props.parentProps }
+  }, [props])
 
-  // 默认值处理
-  const draggableDefault = useMemo(() => draggableParsed ?? true, [draggableParsed])
-  const resizableDefault = useMemo(() => resizableParsed ?? true, [resizableParsed])
-  const removableDefault = useMemo(() => removableParsed ?? true, [removableParsed])
-  const droppableOutDefault = useMemo(() => droppableOutParsed ?? true, [droppableOutParsed])
+  // Props 转 useState
+  const [droppableOutDefaultState, setDroppableOutDefaultState] = useState(
+    droppableOutDefault.current
+  )
+  const [dropOutHandlerState, setDropOutHandlerState] = useState(dropOutHandlerParsed.current)
+  const [removeHandlerState, setRemoveHandlerState] = useState(removeHandlerParsed.current)
+  const [removableDefaultState, setRemovableDefaultState] = useState(removableDefault.current)
+  const [overflowState, setOverflowState] = useState(overflowParsed.current)
+  const [dragHandlerState, setDragHandlerState] = useState(dragHandlerParsed.current)
+  const [draggableDefaultState, setDraggableDefaultState] = useState(draggableDefault.current)
+  const [columnStartState, setColumnStartState] = useState(columnStartParsed.current)
+  const [columnEndState, setColumnEndState] = useState(columnEndParsed.current)
+  const [rowStartState, setRowStartState] = useState(rowStartParsed.current)
+  const [rowEndState, setRowEndState] = useState(rowEndParsed.current)
+  const [rowsState, setRowsState] = useState(rowsParsed.current)
+  const [columnsState, setColumnsState] = useState(columnsParsed.current)
 
-  if (debugParsed) {
-    console.log(context?.gird?.props)
-  }
+  // Props 的 useState 默认值处理
+  useEffect(() => {
+    setDroppableOutDefaultState(droppableOutDefault.current)
+  }, [props.droppableOut])
+  useEffect(() => {
+    setDropOutHandlerState(dropOutHandlerParsed.current)
+  }, [props.dropOutHandler])
+  useEffect(() => {
+    setRemoveHandlerState(removeHandlerParsed.current)
+  }, [props.removeHandler])
+  useEffect(() => {
+    setRemovableDefaultState(removableDefault.current)
+  }, [props.removable])
+  useEffect(() => {
+    setOverflowState(overflowParsed.current)
+  }, [props.overflow])
+  useEffect(() => {
+    setDragHandlerState(dragHandlerParsed.current)
+  }, [props.dragHandler])
+  useEffect(() => {
+    setDraggableDefaultState(draggableDefault.current)
+  }, [props.draggable])
+  useEffect(() => {
+    setColumnStartState(columnStartParsed.current)
+  }, [props.columnStart])
+  useEffect(() => {
+    setColumnEndState(columnEndParsed.current)
+  }, [props.columnEnd])
+  useEffect(() => {
+    setRowStartState(rowStartParsed.current)
+  }, [props.rowStart])
+  useEffect(() => {
+    setRowEndState(rowEndParsed.current)
+  }, [props.rowEnd])
+  useEffect(() => {
+    setRowsState(rowsParsed.current)
+  }, [props.rows])
+  useEffect(() => {
+    setColumnsState(columnsParsed.current)
+  }, [props.columns])
 
-  const providePropsRef = useMemo(
-    () => ({
+  // Dom
+  const itemEle = useRef<HTMLDivElement | null>(null)
+  const [itemEleState, setItemEleState] = useState(itemEle.current)
+
+  useEffect(() => {
+    setItemEleState(itemEle.current)
+  }, [])
+
+  // 下发父配置
+  const [parentPropsState, setParentPropsState] = useState(parentPropsParsed.current)
+  const parentProps = useRef({ ...props })
+
+  useEffect(() => {
+    parentProps.current = {
       ...props,
       //
-      dragHandler: dragHandlerParsed,
-      dropOutHandler: dropOutHandlerParsed,
-      removeHandler: removeHandlerParsed,
-      overflow: overflowParsed,
+      dragHandler: dragHandlerParsed.current,
+      dropOutHandler: dropOutHandlerParsed.current,
+      removeHandler: removeHandlerParsed.current,
+      overflow: overflowParsed.current,
       //
-      readonly: readonlyParsed,
+      readonly: readonlyParsed.current,
       //
-      draggable: draggableParsed,
-      resizable: resizableParsed,
-      removable: removableParsed,
-      droppableOut: droppableOutParsed,
+      draggable: draggableParsed.current,
+      resizable: resizableParsed.current,
+      removable: removableParsed.current,
+      droppableOut: droppableOutParsed.current,
       //
-      debug: debugParsed,
-    }),
-    [
-      props,
-      dragHandlerParsed,
-      dropOutHandlerParsed,
-      removeHandlerParsed,
-      overflowParsed,
-      readonlyParsed,
-      draggableParsed,
-      resizableParsed,
-      removableParsed,
-      droppableOutParsed,
-      debugParsed,
-    ]
-  )
+      debug: debugParsed.current,
+    }
+    setParentPropsState(parentProps.current)
+  }, [props])
 
-  const contextNext: GridDragResizeContextType | undefined = context
-    ? {
-        gird: {
-          props: providePropsRef,
-        },
-        state: context.state,
-      }
-    : undefined
+  // 调试
+  if (debugParsed.current) {
+    console.log(parentProps)
+  }
+
+  // ............................................................
+
+  // 自适应间距
+  const [adjustDistanceState, setAdjustDistanceState] = useState(props.parentProps?.gap ?? 0)
+  useEffect(() => {
+    const size = 10 / 2
+    const gap = props.parentProps?.gap ?? 0
+    setAdjustDistanceState(gap < size ? gap : size)
+  }, [props.parentProps?.gap])
+
+  // 自适应间距
+  const [removeDistanceState, setRemoveDistanceState] = useState(props.parentProps?.gap ?? 0)
+  useEffect(() => {
+    const size = 13 / 2
+    const gap = props.parentProps?.gap ?? 0
+    setRemoveDistanceState(gap < size ? gap : size)
+  }, [props.parentProps?.gap])
+
+  // 自适应间距
+  const [dropDistanceState, setDropDistanceState] = useState(props.parentProps?.gap ?? 0)
+  useEffect(() => {
+    const size = 16 / 2
+    const gap = props.parentProps?.gap ?? 0
+    setDropDistanceState(gap < size ? gap : size)
+  }, [props.parentProps?.gap])
+
+  // hover 状态
+  const [hoverEleState, setHoverEleState] = useState(context?.state.hoverEle)
+  const [hoverState, setHoverState] = useState(hoverEleState === itemEleState)
+  useEffect(() => {
+    setHoverState(hoverEleState === itemEleState)
+  }, [hoverEleState])
+  useEffect(() => {
+    setHoverEleState(context?.state.hoverEle)
+  }, [context?.state.hoverEle])
+
+  // 样式
+  const style = useMemo(() => {
+    return {
+      gridColumnStart: columnStartState ?? '',
+      gridColumnEnd: columnEndState ?? '',
+      gridRowStart: rowStartState ?? '',
+      gridRowEnd: rowEndState ?? '',
+    }
+  }, [columnStartState, columnEndState, rowStartState, rowEndState])
 
   // 数据整理
   useEffect(() => {
-    if (props?.rows !== rowsParsed) {
-      props?.updateRows?.(rowsParsed)
+    if (props.rows !== rowsState) {
+      props.updateRows?.(rowsState)
     }
-
-    if (props?.columns !== columnsParsed) {
-      props?.updateColumns?.(columnsParsed)
-    }
-  }, [props, rowsParsed, columnsParsed, props?.rows, props?.columns])
+  }, [props.rows, rowsState])
 
   useEffect(() => {
-    let columnStart = props?.columnStart ?? 0
-    let columnEnd = props?.columnEnd ?? 0
-    let columns = props?.columns ?? 0
-    let rowStart = props?.rowStart ?? 0
-    let rowEnd = props?.rowEnd ?? 0
-    let rows = props?.rows ?? 0
+    if (props.columns !== columnsState) {
+      props.updateColumns?.(columnsState)
+    }
+  }, [props.columns, columnsState])
+
+  // ............................................................
+
+  useEffect(() => {
+    let columnStart = props.columnStart ?? 0
+    let columnEnd = props.columnEnd ?? 0
+    let columns = props.columns ?? 0
+    let rowStart = props.rowStart ?? 0
+    let rowEnd = props.rowEnd ?? 0
+    let rows = props.rows ?? 0
 
     if (
       (columnStart < 1 && columnEnd < 1) ||
@@ -225,180 +307,20 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       }
     }
 
-    props?.updateColumnStart?.(columnStart)
-    props?.updateColumnEnd?.(columnEnd)
-    props?.updateColumns?.(columns)
+    props.updateColumnStart?.(columnStart)
+    props.updateColumnEnd?.(columnEnd)
+    props.updateColumns?.(columns)
 
-    props?.updateRowStart?.(rowStart)
-    props?.updateRowEnd?.(rowEnd)
-    props?.updateRows?.(rows)
-  }, [
-    props,
-    props?.columnEnd,
-    props?.columnStart,
-    props?.columns,
-    props?.rowEnd,
-    props?.rowStart,
-    props?.rows,
-  ])
-
-  // 样式
-  const style = useMemo(() => {
-    return {
-      gridColumnStart: columnStartParsed ?? '',
-      gridColumnEnd: columnEndParsed ?? '',
-      gridRowStart: rowStartParsed ?? '',
-      gridRowEnd: rowEndParsed ?? '',
-    }
-  }, [columnStartParsed, columnEndParsed, rowStartParsed, rowEndParsed])
-
-  const itemEle = useRef<HTMLDivElement | null>(null)
-  const [itemEleState, setItemEleState] = useState(itemEle.current)
-  useEffect(() => {
-    setItemEleState(itemEle.current)
-  }, [itemEle])
+    props.updateRowStart?.(rowStart)
+    props.updateRowEnd?.(rowEnd)
+    props.updateRows?.(rows)
+  }, [props.columnStart, props.columnEnd, props.columns, props.rowStart, props.rowEnd, props.rows])
 
   // 拖动开始
-  const dragstart = useCallback(
-    (e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
-      if (draggableDefault) {
-        console.log('item dragstart')
-        // 通知父组件 当前拖动子组件
-        props?.startDrag?.({
-          event: e as MouseEvent,
-          rect:
-            itemEle?.current?.getBoundingClientRect() ??
-            ({
-              height: 0,
-              width: 0,
-              x: 0,
-              y: 0,
-              bottom: 0,
-              right: 0,
-            } as DOMRect),
-        })
-      }
-    },
-    [props, draggableDefault]
-  )
-
-  const dropEnd = useCallback(() => {
-    props?.dropEnd?.()
-  }, [props])
-
-  const dropStart = useCallback(() => {
-    props?.dropStart?.({
-      ele: itemEle.current,
-      remove: () => {
-        if (removableDefault) {
-          props?.remove?.()
-        }
-      },
-    })
-  }, [props, removableDefault])
-
-  // 移除
-  const remove = useCallback(
-    (e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
-      e.stopPropagation()
-
-      props?.remove?.()
-    },
-    [props]
-  )
-
-  // dragHandler 定位、处理、事件绑定
-  useEffect(() => {
-    if (draggableDefault && dragHandlerParsed && itemEle.current) {
-      const handlerEle = itemEle.current.querySelector(dragHandlerParsed)
-      if (handlerEle instanceof HTMLElement) {
-        handlerEle.style.cursor = 'move'
-
-        handlerEle.addEventListener('mousedown', dragstart)
-      }
-    }
-  }, [dragHandlerParsed, draggableDefault, dragstart])
-
-  // dropOutHandler 定位、处理、事件绑定
-  useEffect(() => {
-    if (droppableOutDefault && dropOutHandlerParsed && itemEle.current) {
-      const handlerEle = itemEle.current.querySelector(dropOutHandlerParsed)
-      if (handlerEle instanceof HTMLElement) {
-        handlerEle.style.cursor = 'grab'
-
-        handlerEle.setAttribute('draggable', 'true')
-
-        handlerEle.addEventListener('mousedown', (e: MouseEvent) => {
-          e.stopPropagation()
-          dropStart()
-        })
-        handlerEle.addEventListener('mousemove', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-        handlerEle.addEventListener('mouseup', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-        handlerEle.addEventListener('dragstart', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-        handlerEle.addEventListener('dragend', (e: MouseEvent) => {
-          e.stopPropagation()
-          dropEnd()
-        })
-      }
-    }
-  }, [dropStart, dropEnd, dropOutHandlerParsed, droppableOutDefault])
-
-  // removeHandler 定位、处理、事件绑定
-  useEffect(() => {
-    if (removableDefault && removeHandlerParsed && itemEle.current) {
-      const handlerEle = itemEle.current.querySelector(removeHandlerParsed)
-      if (handlerEle instanceof HTMLElement) {
-        handlerEle.style.cursor = 'pointer'
-
-        handlerEle.addEventListener('click', (e: MouseEvent) => {
-          remove(e)
-        })
-
-        handlerEle.addEventListener('mousedown', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-        handlerEle.addEventListener('mousemove', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-        handlerEle.addEventListener('mouseup', (e: MouseEvent) => {
-          e.stopPropagation()
-        })
-      }
-    }
-  }, [remove, removableDefault, removeHandlerParsed])
-
-  // 选中
-  function selectAndResizing(e: React.MouseEvent<HTMLElement, MouseEvent>) {
-    if (!readonlyParsed) {
-      e.stopPropagation()
-
-      // 通知父组件 选中子组件
-      props?.select?.()
-    }
-
-    if (resizableDefault) {
-      e.stopPropagation()
-
-      // 通知父组件 选中子组件
-      props?.selectResizing?.()
-    }
-  }
-
-  // 开始改变大小
-  function resizeStart(
-    e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>,
-    direction: string
-  ) {
-    if (resizableDefault) {
-      e.stopPropagation()
-
-      props?.startResize?.({
+  const dragstart = useCallback((e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
+    if (draggableDefault.current) {
+      // 通知父组件 当前拖动子组件
+      props.startDrag?.({
         event: e as MouseEvent,
         rect:
           itemEle?.current?.getBoundingClientRect() ??
@@ -410,130 +332,297 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
             bottom: 0,
             right: 0,
           } as DOMRect),
-        cursor: e.target instanceof HTMLElement ? getComputedStyle(e.target).cursor : '',
-        direction,
       })
     }
-  }
+  }, [])
 
-  // 自适应间距
-  const removeDistance = useMemo(() => {
-    const size = 13 / 2
-    const gap = context?.gird?.props?.gap ?? 0
-    return gap < size ? gap : size
-  }, [context?.gird?.props?.gap])
+  const dropEnd = useCallback(() => {
+    props.dropEnd?.()
+  }, [])
 
-  // 自适应间距
-  const adjustDistance = useMemo(() => {
-    const size = 10 / 2
-    const gap = context?.gird?.props?.gap ?? 0
-    return gap < size ? gap : size
-  }, [context?.gird?.props?.gap])
+  const dropStart = useCallback(() => {
+    props.dropStart?.({
+      ele: itemEle.current,
+      remove: () => {
+        if (removableDefault.current) {
+          props.remove?.()
+        }
+      },
+    })
+  }, [])
 
-  // 自适应间距
-  const dropDistance = useMemo(() => {
-    const size = 16 / 2
-    const gap = context?.gird?.props?.gap ?? 0
-    return gap < size ? gap : size
-  }, [context?.gird?.props?.gap])
+  // 移除
+  const remove = useCallback((e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
+    e.stopPropagation()
 
-  function mouseover(e: React.MouseEvent<HTMLElement, MouseEvent>) {
-    if (context?.state && e.currentTarget instanceof HTMLElement) {
-      context.state.hoverEle = e.currentTarget
+    props.remove?.()
+  }, [])
+
+  // dragHandler 定位、处理、事件绑定
+  useEffect(() => {
+    if (draggableDefaultState && dragHandlerState && itemEle.current) {
+      const handlerEle = itemEle.current.querySelector(dragHandlerState)
+      if (handlerEle instanceof HTMLElement) {
+        handlerEle.style.cursor = 'move'
+        handlerEle.addEventListener('mousedown', dragstart)
+      }
     }
-  }
 
-  function mouseleave() {
-    if (context?.state) {
+    return () => {
+      window.removeEventListener('mousedown', dragstart)
+    }
+  }, [draggableDefaultState, dragHandlerState])
+
+  // dropOutHandler 定位、处理、事件绑定
+  const mousedownLastDrop = useRef<(e: MouseEvent) => void>()
+  const mousemoveLastDrop = useRef<(e: MouseEvent) => void>()
+  const mouseupLastDrop = useRef<(e: MouseEvent) => void>()
+  const dragstartLastDrop = useRef<(e: MouseEvent) => void>()
+  const dragendLastDrop = useRef<(e: MouseEvent) => void>()
+
+  useEffect(() => {
+    if (droppableOutDefaultState && dropOutHandlerState && itemEle.current) {
+      const handlerEle = itemEle.current.querySelector(dropOutHandlerState)
+      if (handlerEle instanceof HTMLElement) {
+        handlerEle.style.cursor = 'grab'
+
+        handlerEle.setAttribute('draggable', 'true')
+
+        if (mousedownLastDrop.current) {
+          handlerEle.removeEventListener('mousedown', mousedownLastDrop.current)
+        }
+        if (mousemoveLastDrop.current) {
+          handlerEle.removeEventListener('mousemove', mousemoveLastDrop.current)
+        }
+        if (mouseupLastDrop.current) {
+          handlerEle.removeEventListener('mouseup', mouseupLastDrop.current)
+        }
+        if (dragstartLastDrop.current) {
+          handlerEle.removeEventListener('dragstart', dragstartLastDrop.current)
+        }
+        if (dragendLastDrop.current) {
+          handlerEle.removeEventListener('dragend', dragendLastDrop.current)
+        }
+
+        mousedownLastDrop.current = (e: MouseEvent) => {
+          e.stopPropagation()
+          dropStart()
+        }
+        handlerEle.addEventListener('mousedown', mousedownLastDrop.current)
+        mousemoveLastDrop.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('mousemove', mousemoveLastDrop.current)
+        mouseupLastDrop.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('mouseup', mouseupLastDrop.current)
+        dragstartLastDrop.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('dragstart', dragstartLastDrop.current)
+        dragendLastDrop.current = (e: MouseEvent) => {
+          e.stopPropagation()
+          dropEnd()
+        }
+        handlerEle.addEventListener('dragend', dragendLastDrop.current)
+      }
+    }
+  }, [dropOutHandlerState, droppableOutDefaultState])
+
+  // removeHandler 定位、处理、事件绑定
+  const clickLastRemove = useRef<(e: MouseEvent) => void>()
+  const mousedownLastRemove = useRef<(e: MouseEvent) => void>()
+  const mousemoveLastRemove = useRef<(e: MouseEvent) => void>()
+  const mouseupLastRemove = useRef<(e: MouseEvent) => void>()
+
+  useEffect(() => {
+    if (removableDefaultState && removeHandlerState && itemEle.current) {
+      const handlerEle = itemEle.current.querySelector(removeHandlerState)
+      if (handlerEle instanceof HTMLElement) {
+        handlerEle.style.cursor = 'pointer'
+
+        if (clickLastRemove.current) {
+          handlerEle.removeEventListener('click', clickLastRemove.current)
+        }
+        if (mousedownLastRemove.current) {
+          handlerEle.removeEventListener('mousedown', mousedownLastRemove.current)
+        }
+        if (mousemoveLastRemove.current) {
+          handlerEle.removeEventListener('mousemove', mousemoveLastRemove.current)
+        }
+        if (mouseupLastRemove.current) {
+          handlerEle.removeEventListener('mouseup', mouseupLastRemove.current)
+        }
+
+        clickLastRemove.current = (e: MouseEvent) => {
+          remove(e)
+        }
+        handlerEle.addEventListener('click', clickLastRemove.current)
+
+        mousedownLastRemove.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('mousedown', mousedownLastRemove.current)
+        mousemoveLastRemove.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('mousemove', mousemoveLastRemove.current)
+        mouseupLastRemove.current = (e: MouseEvent) => {
+          e.stopPropagation()
+        }
+        handlerEle.addEventListener('mouseup', mouseupLastRemove.current)
+      }
+    }
+  }, [removableDefaultState, removeHandlerState])
+
+  // 选中
+  const selectAndResizing = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    if (!readonlyParsed.current) {
+      e.stopPropagation()
+
+      // 通知父组件 选中子组件
+      props.select?.()
+    }
+
+    if (resizableDefault.current) {
+      e.stopPropagation()
+
+      // 通知父组件 选中子组件
+      props.selectResizing?.()
+    }
+  }, [])
+
+  // 开始改变大小
+  const resizeStart = useCallback(
+    (e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>, direction: string) => {
+      if (resizableDefault.current) {
+        e.stopPropagation()
+
+        props.startResize?.({
+          event: e as MouseEvent,
+          rect:
+            itemEle?.current?.getBoundingClientRect() ??
+            ({
+              height: 0,
+              width: 0,
+              x: 0,
+              y: 0,
+              bottom: 0,
+              right: 0,
+            } as DOMRect),
+          cursor: e.target instanceof HTMLElement ? getComputedStyle(e.target).cursor : '',
+          direction,
+        })
+      }
+    },
+    []
+  )
+
+  const mouseover = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    if (e.currentTarget instanceof HTMLElement) {
+      if (context) {
+        context.state.hoverEle = e.currentTarget
+        context.setState({ ...context.state })
+      }
+    }
+  }, [])
+
+  const mouseleave = useCallback(() => {
+    if (context) {
       context.state.hoverEle = undefined
+      context.setState({ ...context.state })
     }
-  }
+  }, [])
 
-  const hover = useMemo(() => {
-    return context?.state?.hoverEle === itemEleState
-  }, [context?.state?.hoverEle, itemEleState])
+  // console.log('item', parentPropsState)
 
   return (
-    <GridDragResizeContext.Provider value={contextNext}>
-      <div
-        className={`grid-drag-resize__item ${[
-          ...(draggableDefault ? ['grid-drag-resize__item--draggable'] : []),
-          ...(draggableDefault && !dragHandlerParsed
-            ? ['grid-drag-resize__item--draggable-full']
-            : []),
-          ...(hover && !context?.state?.dragging && !context?.state?.resizing
-            ? ['grid-drag-resize__item--hover']
-            : []),
-          ...(props.className ? [props.className] : []),
-        ].join(' ')}`}
-        style={{ ...style, ...props.style }}
-        onMouseDown={(e: React.MouseEvent<HTMLElement, MouseEvent>) =>
-          dragHandlerParsed ? undefined : dragstart(e)
-        }
-        onClick={selectAndResizing}
-        onMouseOver={mouseover}
-        onMouseLeave={mouseleave}
-        ref={itemEle}
-      >
-        <div className="grid-drag-resize__item__group" style={{ overflow: overflowParsed }}>
-          {props.children}
-        </div>
-        <b className="grid-drag-resize__item__border grid-drag-resize__item__border--top"></b>
-        <b className="grid-drag-resize__item__border grid-drag-resize__item__border--bottom"></b>
-        <b className="grid-drag-resize__item__border grid-drag-resize__item__border--left"></b>
-        <b className="grid-drag-resize__item__border grid-drag-resize__item__border--right"></b>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top"
-          style={{ top: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'top')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--right"
-          style={{ right: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'right')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom"
-          style={{ bottom: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'bottom')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--left"
-          style={{ left: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'left')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top-left"
-          style={{ top: `${-adjustDistance}px`, left: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'top-left')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top-right"
-          style={{ top: `${-adjustDistance}px`, right: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'top-right')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom-left"
-          style={{ bottom: `${-adjustDistance}px`, left: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'bottom-left')}
-        ></i>
-        <i
-          className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom-right"
-          style={{ bottom: `${-adjustDistance}px`, right: `${-adjustDistance}px` }}
-          onMouseDown={(e) => resizeStart(e, 'bottom-right')}
-        ></i>
+    <div
+      className={`grid-drag-resize__item ${[
+        ...(draggableDefaultState ? ['grid-drag-resize__item--draggable'] : []),
+        ...(draggableDefaultState && !dragHandlerState
+          ? ['grid-drag-resize__item--draggable-full']
+          : []),
+        ...(hoverState && !context?.state.dragging && !context?.state.resizing
+          ? ['grid-drag-resize__item--hover']
+          : []),
+        ...(props.className ? [props.className] : []),
+      ].join(' ')}`}
+      style={{ ...props.style, ...style }}
+      onMouseDown={(e: React.MouseEvent<HTMLElement, MouseEvent>) =>
+        dragHandlerState ? undefined : dragstart(e)
+      }
+      onClick={selectAndResizing}
+      onMouseOverCapture={mouseover}
+      onMouseLeave={mouseleave}
+      ref={itemEle}
+    >
+      <div className="grid-drag-resize__item__group" style={{ overflow: overflowState }}>
+        {props.grid ? (
+          <GridDragResize {...{ ...props.grid, parentProps: parentPropsState }}></GridDragResize>
+        ) : (
+          props.render?.(props)
+        )}
+      </div>
+      <b className="grid-drag-resize__item__border grid-drag-resize__item__border--top"></b>
+      <b className="grid-drag-resize__item__border grid-drag-resize__item__border--bottom"></b>
+      <b className="grid-drag-resize__item__border grid-drag-resize__item__border--left"></b>
+      <b className="grid-drag-resize__item__border grid-drag-resize__item__border--right"></b>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top"
+        style={{ top: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'top')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--right"
+        style={{ right: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'right')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom"
+        style={{ bottom: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'bottom')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--left"
+        style={{ left: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'left')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top-left"
+        style={{ top: `${-adjustDistanceState}px`, left: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'top-left')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--top-right"
+        style={{ top: `${-adjustDistanceState}px`, right: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'top-right')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom-left"
+        style={{ bottom: `${-adjustDistanceState}px`, left: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'bottom-left')}
+      ></i>
+      <i
+        className="grid-drag-resize__item__adjust grid-drag-resize__item__adjust--bottom-right"
+        style={{ bottom: `${-adjustDistanceState}px`, right: `${-adjustDistanceState}px` }}
+        onMouseDown={(e) => resizeStart(e, 'bottom-right')}
+      ></i>
+      {removableDefaultState && !removeHandlerState && (
         <span
           className="grid-drag-resize__item__remove"
-          style={{ top: `${-removeDistance}px`, right: `${-removeDistance}px` }}
+          style={{ top: `${-removeDistanceState}px`, right: `${-removeDistanceState}px` }}
           onClick={remove}
           onMouseDown={(e) => e.stopPropagation()}
           onMouseMove={(e) => e.stopPropagation()}
           onMouseUp={(e) => e.stopPropagation()}
-          v-if="removableDefault && !removeHandlerParsed"
         ></span>
+      )}
+      {droppableOutDefaultState && !dropOutHandlerState && (
         <div
           className="grid-drag-resize__item__drop"
-          style={{ top: droppableOutDefault ? `${-dropDistance}px` : '' }}
+          style={{ top: droppableOutDefaultState ? `${-dropDistanceState}px` : '' }}
           draggable="true"
           onMouseDown={(e) => {
             e.stopPropagation()
@@ -543,9 +632,8 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
           onMouseUp={(e) => e.stopPropagation()}
           onDragStart={(e) => e.stopPropagation()}
           onDragEnd={(e) => e.stopPropagation()}
-          v-if="droppableOutDefault && !dropOutHandlerParsed"
         ></div>
-      </div>
-    </GridDragResizeContext.Provider>
+      )}
+    </div>
   )
 }
