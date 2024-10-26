@@ -317,28 +317,31 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   }, [props.columnStart, props.columnEnd, props.columns, props.rowStart, props.rowEnd, props.rows])
 
   // 拖动开始
-  const dragstart = useCallback((e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
-    if (draggableDefault.current) {
-      // 通知父组件 当前拖动子组件
-      props.startDrag?.({
-        event: e as MouseEvent,
-        rect:
-          itemEle?.current?.getBoundingClientRect() ??
-          ({
-            height: 0,
-            width: 0,
-            x: 0,
-            y: 0,
-            bottom: 0,
-            right: 0,
-          } as DOMRect),
-      })
-    }
-  }, [])
+  const dragstart = useCallback(
+    (e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
+      if (draggableDefault.current) {
+        // 通知父组件 当前拖动子组件
+        props.startDrag?.({
+          event: e as MouseEvent,
+          rect:
+            itemEle?.current?.getBoundingClientRect() ??
+            ({
+              height: 0,
+              width: 0,
+              x: 0,
+              y: 0,
+              bottom: 0,
+              right: 0,
+            } as DOMRect),
+        })
+      }
+    },
+    [props]
+  )
 
   const dropEnd = useCallback(() => {
     props.dropEnd?.()
-  }, [])
+  }, [props])
 
   const dropStart = useCallback(() => {
     props.dropStart?.({
@@ -349,14 +352,17 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
         }
       },
     })
-  }, [])
+  }, [props])
 
   // 移除
-  const remove = useCallback((e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
-    e.stopPropagation()
+  const remove = useCallback(
+    (e: MouseEvent | React.MouseEvent<HTMLElement, MouseEvent>) => {
+      e.stopPropagation()
 
-    props.remove?.()
-  }, [])
+      props.remove?.()
+    },
+    [props]
+  )
 
   // dragHandler 定位、处理、事件绑定
   useEffect(() => {
@@ -477,21 +483,24 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   }, [removableDefaultState, removeHandlerState])
 
   // 选中
-  const selectAndResizing = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-    if (!readonlyParsed.current) {
-      e.stopPropagation()
+  const selectAndResizing = useCallback(
+    (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      if (!readonlyParsed.current) {
+        e.stopPropagation()
 
-      // 通知父组件 选中子组件
-      props.select?.()
-    }
+        // 通知父组件 选中子组件
+        props.select?.()
+      }
 
-    if (resizableDefault.current) {
-      e.stopPropagation()
+      if (resizableDefault.current) {
+        e.stopPropagation()
 
-      // 通知父组件 选中子组件
-      props.selectResizing?.()
-    }
-  }, [])
+        // 通知父组件 选中子组件
+        props.selectResizing?.()
+      }
+    },
+    [props]
+  )
 
   // 开始改变大小
   const resizeStart = useCallback(
@@ -516,26 +525,27 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
         })
       }
     },
-    []
+    [props]
   )
 
-  const mouseover = useCallback((e: React.MouseEvent<HTMLElement, MouseEvent>) => {
-    if (e.currentTarget instanceof HTMLElement) {
-      if (context) {
-        context.state.hoverEle = e.currentTarget
-        context.setState({ ...context.state })
+  const mouseover = useCallback(
+    (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      if (e.currentTarget instanceof HTMLElement) {
+        if (context) {
+          context.state.hoverEle = e.currentTarget
+          context.setState({ ...context.state })
+        }
       }
-    }
-  }, [])
+    },
+    [context]
+  )
 
   const mouseleave = useCallback(() => {
     if (context) {
       context.state.hoverEle = undefined
       context.setState({ ...context.state })
     }
-  }, [])
-
-  // console.log('item', parentPropsState)
+  }, [context])
 
   return (
     <div
@@ -560,7 +570,11 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     >
       <div className="grid-drag-resize__item__group" style={{ overflow: overflowState }}>
         {props.grid ? (
-          <GridDragResize {...{ ...props.grid, parentProps: parentPropsState }}></GridDragResize>
+          <GridDragResize
+            {...props.grid}
+            droppingChild={context?.state.droppingChild}
+            parentProps={parentPropsState}
+          ></GridDragResize>
         ) : (
           props.render?.(props)
         )}

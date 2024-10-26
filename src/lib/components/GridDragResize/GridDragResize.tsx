@@ -50,6 +50,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [sub])
   // console.log(2, sub, props)
 
+  // console.log(props.parentProps)
+
   // Props 转 useRef
   const columnsParsed = useRef(1)
   const rowsParsed = useRef(1)
@@ -217,6 +219,16 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   const [droppingState, setDroppingState] = useState(false)
 
   useEffect(() => {
+    // console.log(
+    //   'setDroppingState',
+    //   context.state.droppingEle === rootEleState && !droppingSelfOrParentState
+    // )
+    // console.log(
+    //   'setDroppingState 2',
+    //   context.state.droppingEle,
+    //   rootEleState,
+    //   !droppingSelfOrParentState
+    // )
     setDroppingState(context.state.droppingEle === rootEleState && !droppingSelfOrParentState)
   }, [context.state.droppingEle, rootEleState, droppingSelfOrParentState])
 
@@ -270,7 +282,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     context.state.droppingEle = undefined
     context.state.droppingChildRemove = undefined
     context.setState({ ...context.state })
-  }, [])
+  }, [context, props])
 
   // 限制 扩展
   const rowExpandableParsed = useMemo(
@@ -283,15 +295,18 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   )
 
   // 更新状态
-  const stateInjectActionDown = useCallback((v: boolean) => {
-    // debugger
-    if (v) {
-      // 记录 当前正在 drag、resize 的 GridDragResize 组件
-      context.state.actionEle = rootEle.current ?? undefined
-    } else {
-      context.state.actionEle = undefined
-    }
-  }, [])
+  const stateInjectActionDown = useCallback(
+    (v: boolean) => {
+      // debugger
+      if (v) {
+        // 记录 当前正在 drag、resize 的 GridDragResize 组件
+        context.state.actionEle = rootEle.current ?? undefined
+      } else {
+        context.state.actionEle = undefined
+      }
+    },
+    [context.state]
+  )
 
   // 转换为 grid 模版
   function gridTemplateParse(count: number, size?: number) {
@@ -313,7 +328,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
 
       return min === void 0 ? calc : min < calc ? calc : min
     },
-    []
+    [props.cells]
   )
 
   useEffect(() => {
@@ -411,7 +426,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [props.cells])
 
   // 列宽
-  const columnSize = useMemo(() => {
+  const getColumnSize = useCallback(() => {
     const rootRect = rootEleState?.getBoundingClientRect() ?? {
       height: 0,
       width: 0,
@@ -420,6 +435,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       bottom: 0,
       right: 0,
     }
+
     return (
       props.columnSize ??
       (rootRect.width - gapState * (columnsChangedState - 1)) / columnsChangedState
@@ -427,7 +443,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [columnsChangedState, gapState, props.columnSize, rootEleState])
 
   // 行高
-  const rowSize = useMemo(() => {
+  const getRowSize = useCallback(() => {
     const rootRect = rootEleState?.getBoundingClientRect() ?? {
       height: 0,
       width: 0,
@@ -538,6 +554,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     // 如此，通过计算 拖动位置（相对于组件）与 大小+间隙 的倍数即可
     let start = size + gap ? Math.ceil((pos + gap / 2) / (size + gap)) : 0
 
+    // console.log(pos + gap / 2, size + gap)
+
     if (start < 1) {
       start = 1
     }
@@ -619,9 +637,10 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     resizingChildDirection.current = ''
 
     document.body.style.cursor = ''
-  }, [])
+  }, [context, stateInjectActionDown])
 
   const dragReset = useCallback(() => {
+    // console.log('dragging = false')
     context.state.dragging = false
     context.setState({ ...context.state })
     stateInjectActionDown(false)
@@ -631,7 +650,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     draggingChildBefore.current = undefined
     draggingChildRect.current = undefined
     draggingChildEle.current = undefined
-  }, [])
+  }, [context, stateInjectActionDown])
 
   // 元素是否整个在都可视区域内
   function isElementInViewport(el: HTMLElement) {
@@ -655,53 +674,56 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [])
 
   // 拖动开始
-  const startDrag = useCallback((res: StartDragEvent, cell: GridDragResizeItemProps) => {
+  const startDrag = (res: StartDragEvent, cell: GridDragResizeItemProps) => {
     const { event: e, rect } = res
     if (e && e.currentTarget instanceof HTMLElement) {
       updateDrag(cell, rect, e.currentTarget)
     }
-  }, [])
+  }
 
   // 调整大小开始
-  const resizingStart = useCallback((...args: any[] | unknown[]) => {
-    // 这里的写法是为了通过 github pages 的 type-check
-    const res = args[0] as StartResizeEvent
-    const { event: e, rect, cursor, direction } = res
+  const resizingStart = useCallback(
+    (...args: any[] | unknown[]) => {
+      // 这里的写法是为了通过 github pages 的 type-check
+      const res = args[0] as StartResizeEvent
+      const { event: e, rect, cursor, direction } = res
 
-    if (e && e.currentTarget instanceof HTMLElement) {
-      if (e.currentTarget.parentElement instanceof HTMLElement) {
-        resizingChildEle.current = e.currentTarget.parentElement
+      if (e && e.currentTarget instanceof HTMLElement) {
+        if (e.currentTarget.parentElement instanceof HTMLElement) {
+          resizingChildEle.current = e.currentTarget.parentElement
+        }
       }
-    }
 
-    // 更新 点击开始位置
-    clickStartX.current = e.clientX
-    clickStartY.current = e.clientY
+      // 更新 点击开始位置
+      clickStartX.current = e.clientX
+      clickStartY.current = e.clientY
 
-    // 更新 调整大小开始位置
-    resizeStartClientX.current = e.clientX
-    resizeStartClientY.current = e.clientY
+      // 更新 调整大小开始位置
+      resizeStartClientX.current = e.clientX
+      resizeStartClientY.current = e.clientY
 
-    // 状态互斥
-    dragReset()
+      // 状态互斥
+      dragReset()
 
-    context.state.resizing = true
-    context.setState({ ...context.state })
+      context.state.resizing = true
+      context.setState({ ...context.state })
 
-    stateInjectActionDown(true)
+      stateInjectActionDown(true)
 
-    // 更新计算所需信息
-    resizingChildRect.current = rect
-    resizingChildCursor.current = cursor
-    setResizingChildCursorState(resizingChildCursor.current)
-    resizingChildDirection.current = direction
+      // 更新计算所需信息
+      resizingChildRect.current = rect
+      resizingChildCursor.current = cursor
+      setResizingChildCursorState(resizingChildCursor.current)
+      resizingChildDirection.current = direction
 
-    // 拖出区域保持鼠标类型
-    document.body.style.cursor = cursor
+      // 拖出区域保持鼠标类型
+      document.body.style.cursor = cursor
 
-    // 缓存状态
-    resizingChildBefore.current = { ...resizingChildRef.current }
-  }, [])
+      // 缓存状态
+      resizingChildBefore.current = { ...resizingChildRef.current }
+    },
+    [context, dragReset, stateInjectActionDown]
+  )
 
   // 更新拖动信息
   function updateDrag(cell: GridDragResizeItemProps, rect: DOMRect, target: HTMLElement) {
@@ -713,208 +735,228 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }
 
   // 拖动开始
-  const dragStart = useCallback((e: MouseEvent) => {
-    // 更新 点击开始位置
-    clickStartX.current = e.clientX
-    clickStartY.current = e.clientY
+  const dragStart = useCallback(
+    (e: MouseEvent) => {
+      // 更新 点击开始位置
+      clickStartX.current = e.clientX
+      clickStartY.current = e.clientY
 
-    if (!readonlyParsed.current) {
-      if (draggingChild.current && draggingChildRect.current) {
-        // 状态互斥
-        resizingReset()
+      // console.log(draggingChild.current)
 
-        context.state.dragging = true
-        context.setState({ ...context.state })
+      if (!readonlyParsed.current) {
+        if (draggingChild.current && draggingChildRect.current) {
+          // 状态互斥
+          resizingReset()
 
-        stateInjectActionDown(true)
+          // console.log('dragging = true')
+          context.state.dragging = true
+          context.setState({ ...context.state })
 
-        // 记录 拖动开始位置
-        dragStartClientX.current = e.clientX
-        dragStartClientY.current = e.clientY
+          stateInjectActionDown(true)
+
+          // 记录 拖动开始位置
+          dragStartClientX.current = e.clientX
+          dragStartClientY.current = e.clientY
+        }
       }
-    }
-  }, [])
+    },
+    [context, resizingReset, stateInjectActionDown]
+  )
 
   // 拖动中
-  const dragMove = useCallback((e: MouseEvent) => {
-    // console.log('draggingChild.current', draggingChild.current)
-    if (context.state.dragging && draggingChild.current) {
-      // 计算 拖动偏移量
-      dragOffsetClientColumn.current = e.clientX - dragStartClientX.current
-      dragOffsetClientRow.current = e.clientY - dragStartClientY.current
+  const dragMove = useCallback(
+    (e: MouseEvent) => {
+      // console.log('draggingChild.current', context.state.dragging, props.columns)
+      if (context.state.dragging && draggingChild.current) {
+        // 计算 拖动偏移量
+        dragOffsetClientColumn.current = e.clientX - dragStartClientX.current
+        dragOffsetClientRow.current = e.clientY - dragStartClientY.current
 
-      // 当前拖动子组件的 grid 大小
-      let rowSpan =
-        (draggingChild.current.rowEnd ?? draggingChild.current.rowStart ?? 1) -
-        (draggingChild.current.rowStart ?? 1)
-      let columnSpan =
-        (draggingChild.current.columnEnd ?? draggingChild.current.columnStart ?? 1) -
-        (draggingChild.current.columnStart ?? 1)
+        // 当前拖动子组件的 grid 大小
+        let rowSpan =
+          (draggingChild.current.rowEnd ?? draggingChild.current.rowStart ?? 1) -
+          (draggingChild.current.rowStart ?? 1)
+        let columnSpan =
+          (draggingChild.current.columnEnd ?? draggingChild.current.columnStart ?? 1) -
+          (draggingChild.current.columnStart ?? 1)
 
-      // 边界处理
-      {
-        if (rowSpan <= 0) {
-          rowSpan = 1
-        }
+        // 边界处理
+        {
+          if (rowSpan <= 0) {
+            rowSpan = 1
+          }
 
-        if (columnSpan <= 0) {
-          columnSpan = 1
-        }
-      }
-
-      // 计算行方向上，移动后最新的位置和大小
-      const { start: rowStart, end: rowEnd } = calcDragStartEndByOffset({
-        size: rowSize,
-        gap: gapParsed.current,
-        span: rowSpan,
-        max: rowsChangedRef.current ?? 1,
-        offset: dragOffsetClientRow.current,
-        startBefore: draggingChildBefore.current?.rowStart ?? 1,
-        direction: rowDirection.current,
-        expandable: rowExpandableParsed ?? false,
-      })
-
-      if (rowExpandableParsed) {
-        // 向下扩展
-        rowsChangedRef.current = calcMaxCount('rows', rowsParsed.current)
-        setRowsChangedState(rowsChangedRef.current)
-      }
-
-      // 计算列方向上，移动后最新的位置和大小
-      const { start: columnStart, end: columnEnd } = calcDragStartEndByOffset({
-        size: columnSize,
-        gap: gapParsed.current,
-        span: columnSpan,
-        max: columnsChangedRef.current ?? 1,
-        offset: dragOffsetClientColumn.current,
-        startBefore: draggingChildBefore.current?.columnStart ?? 1,
-        direction: columnDirection.current,
-        expandable: columnExpandableParsed ?? false,
-      })
-
-      if (columnExpandableParsed) {
-        // 向右扩展
-        columnsChangedRef.current = calcMaxCount('columns', columnsParsed.current)
-        setColumnsChangedState(columnsChangedRef.current)
-      }
-
-      // 更新 当前拖动子组件的数据项
-      draggingChild.current.columnStart = columnStart
-      draggingChild.current.columnEnd = columnEnd
-      draggingChild.current.rowStart = rowStart
-      draggingChild.current.rowEnd = rowEnd
-
-      props.updateCells?.(props.cells ? [...props.cells] : [])
-
-      // 滚动跟随
-      scrollIntoViewIfNeeded(draggingChildEle.current)
-    }
-    if (context.state.resizing) {
-      // 计算 调整大小拖动偏移量
-      resizeOffsetClientColumn.current = e.clientX - resizeStartClientX.current
-      resizeOffsetClientRow.current = e.clientY - resizeStartClientY.current
-
-      if (resizingChildRef.current) {
-        // 行 向
-        if (resizingChildDirection.current.startsWith('top')) {
-          const { start: rowStart, end: rowEnd } = calcResizeStartEnd({
-            size: rowSize,
-            gap: gapParsed.current,
-            max: rowsChangedRef.current ?? 1,
-            offset: resizeOffsetClientRow.current,
-            startBefore: resizingChildBefore.current?.rowStart ?? 1,
-            endBefore: resizingChildBefore.current?.rowEnd ?? 1,
-            target: 'start',
-            expandable: rowExpandableParsed ?? false,
-          })
-          resizingChildRef.current.rows = rowEnd - rowStart
-          resizingChildRef.current.rowStart = rowStart
-          resizingChildRef.current.rowEnd = rowEnd
-          setResizingChildState(resizingChildRef.current)
-          props.updateCells?.(props.cells ? [...props.cells] : [])
-        } else if (resizingChildDirection.current.startsWith('bottom')) {
-          const { start: rowStart, end: rowEnd } = calcResizeStartEnd({
-            size: rowSize,
-            gap: gapParsed.current,
-            max: rowsChangedRef.current ?? 1,
-            offset: resizeOffsetClientRow.current,
-            startBefore: resizingChildBefore.current?.rowStart ?? 1,
-            endBefore: resizingChildBefore.current?.rowEnd ?? 1,
-            target: 'end',
-            expandable: rowExpandableParsed ?? false,
-          })
-          resizingChildRef.current.rows = rowEnd - rowStart
-          resizingChildRef.current.rowStart = rowStart
-          resizingChildRef.current.rowEnd = rowEnd
-          setResizingChildState(resizingChildRef.current)
-          props.updateCells?.(props.cells ? [...props.cells] : [])
-
-          if (rowExpandableParsed) {
-            // 向下扩展
-            rowsChangedRef.current = calcMaxCount('rows', rowsParsed.current)
-            setRowsChangedState(rowsChangedRef.current)
+          if (columnSpan <= 0) {
+            columnSpan = 1
           }
         }
 
-        // 列 向
-        if (resizingChildDirection.current.endsWith('left')) {
-          const { start: columnStart, end: columnEnd } = calcResizeStartEnd({
-            size: columnSize,
-            gap: gapParsed.current,
-            max: columnsChangedRef.current ?? 1,
-            offset: resizeOffsetClientColumn.current,
-            startBefore: resizingChildBefore.current?.columnStart ?? 1,
-            endBefore: resizingChildBefore.current?.columnEnd ?? 1,
-            target: 'start',
-            expandable: columnExpandableParsed ?? false,
-          })
-          resizingChildRef.current.columns = columnEnd - columnStart
-          resizingChildRef.current.columnStart = columnStart
-          resizingChildRef.current.columnEnd = columnEnd
-          setResizingChildState(resizingChildRef.current)
-          props.updateCells?.(props.cells ? [...props.cells] : [])
-        } else if (resizingChildDirection.current.endsWith('right')) {
-          const { start: columnStart, end: columnEnd } = calcResizeStartEnd({
-            size: columnSize,
-            gap: gapParsed.current,
-            max: columnsChangedRef.current ?? 1,
-            offset: resizeOffsetClientColumn.current,
-            startBefore: resizingChildBefore.current?.columnStart ?? 1,
-            endBefore: resizingChildBefore.current?.columnEnd ?? 1,
-            target: 'end',
-            expandable: columnExpandableParsed ?? false,
-          })
-          resizingChildRef.current.columns = columnEnd - columnStart
-          resizingChildRef.current.columnStart = columnStart
-          resizingChildRef.current.columnEnd = columnEnd
-          setResizingChildState(resizingChildRef.current)
-          props.updateCells?.(props.cells ? [...props.cells] : [])
+        // 计算行方向上，移动后最新的位置和大小
+        const { start: rowStart, end: rowEnd } = calcDragStartEndByOffset({
+          size: getRowSize(),
+          gap: gapParsed.current,
+          span: rowSpan,
+          max: rowsChangedRef.current ?? 1,
+          offset: dragOffsetClientRow.current,
+          startBefore: draggingChildBefore.current?.rowStart ?? 1,
+          direction: rowDirection.current,
+          expandable: rowExpandableParsed ?? false,
+        })
 
-          if (columnExpandableParsed) {
-            // 向右扩展
-            columnsChangedRef.current = calcMaxCount('columns', columnsParsed.current)
-            setColumnsChangedState(columnsChangedRef.current)
+        if (rowExpandableParsed) {
+          // 向下扩展
+          rowsChangedRef.current = calcMaxCount('rows', rowsParsed.current)
+          setRowsChangedState(rowsChangedRef.current)
+        }
+
+        // 计算列方向上，移动后最新的位置和大小
+        const { start: columnStart, end: columnEnd } = calcDragStartEndByOffset({
+          size: getColumnSize(),
+          gap: gapParsed.current,
+          span: columnSpan,
+          max: columnsChangedRef.current ?? 1,
+          offset: dragOffsetClientColumn.current,
+          startBefore: draggingChildBefore.current?.columnStart ?? 1,
+          direction: columnDirection.current,
+          expandable: columnExpandableParsed ?? false,
+        })
+
+        if (columnExpandableParsed) {
+          // 向右扩展
+          columnsChangedRef.current = calcMaxCount('columns', columnsParsed.current)
+          setColumnsChangedState(columnsChangedRef.current)
+        }
+
+        // 更新 当前拖动子组件的数据项
+        draggingChild.current.columnStart = columnStart
+        draggingChild.current.columnEnd = columnEnd
+        draggingChild.current.rowStart = rowStart
+        draggingChild.current.rowEnd = rowEnd
+
+        props.updateCells?.(props.cells ? [...props.cells] : [])
+
+        // 滚动跟随
+        scrollIntoViewIfNeeded(draggingChildEle.current)
+      }
+      if (context.state.resizing) {
+        // 计算 调整大小拖动偏移量
+        resizeOffsetClientColumn.current = e.clientX - resizeStartClientX.current
+        resizeOffsetClientRow.current = e.clientY - resizeStartClientY.current
+
+        if (resizingChildRef.current) {
+          // 行 向
+          if (resizingChildDirection.current.startsWith('top')) {
+            const { start: rowStart, end: rowEnd } = calcResizeStartEnd({
+              size: getRowSize(),
+              gap: gapParsed.current,
+              max: rowsChangedRef.current ?? 1,
+              offset: resizeOffsetClientRow.current,
+              startBefore: resizingChildBefore.current?.rowStart ?? 1,
+              endBefore: resizingChildBefore.current?.rowEnd ?? 1,
+              target: 'start',
+              expandable: rowExpandableParsed ?? false,
+            })
+            resizingChildRef.current.rows = rowEnd - rowStart
+            resizingChildRef.current.rowStart = rowStart
+            resizingChildRef.current.rowEnd = rowEnd
+            setResizingChildState(resizingChildRef.current)
+            props.updateCells?.(props.cells ? [...props.cells] : [])
+          } else if (resizingChildDirection.current.startsWith('bottom')) {
+            const { start: rowStart, end: rowEnd } = calcResizeStartEnd({
+              size: getRowSize(),
+              gap: gapParsed.current,
+              max: rowsChangedRef.current ?? 1,
+              offset: resizeOffsetClientRow.current,
+              startBefore: resizingChildBefore.current?.rowStart ?? 1,
+              endBefore: resizingChildBefore.current?.rowEnd ?? 1,
+              target: 'end',
+              expandable: rowExpandableParsed ?? false,
+            })
+            resizingChildRef.current.rows = rowEnd - rowStart
+            resizingChildRef.current.rowStart = rowStart
+            resizingChildRef.current.rowEnd = rowEnd
+            setResizingChildState(resizingChildRef.current)
+            props.updateCells?.(props.cells ? [...props.cells] : [])
+
+            if (rowExpandableParsed) {
+              // 向下扩展
+              rowsChangedRef.current = calcMaxCount('rows', rowsParsed.current)
+              setRowsChangedState(rowsChangedRef.current)
+            }
+          }
+
+          // 列 向
+          if (resizingChildDirection.current.endsWith('left')) {
+            const { start: columnStart, end: columnEnd } = calcResizeStartEnd({
+              size: getColumnSize(),
+              gap: gapParsed.current,
+              max: columnsChangedRef.current ?? 1,
+              offset: resizeOffsetClientColumn.current,
+              startBefore: resizingChildBefore.current?.columnStart ?? 1,
+              endBefore: resizingChildBefore.current?.columnEnd ?? 1,
+              target: 'start',
+              expandable: columnExpandableParsed ?? false,
+            })
+            resizingChildRef.current.columns = columnEnd - columnStart
+            resizingChildRef.current.columnStart = columnStart
+            resizingChildRef.current.columnEnd = columnEnd
+            setResizingChildState(resizingChildRef.current)
+            props.updateCells?.(props.cells ? [...props.cells] : [])
+          } else if (resizingChildDirection.current.endsWith('right')) {
+            const { start: columnStart, end: columnEnd } = calcResizeStartEnd({
+              size: getColumnSize(),
+              gap: gapParsed.current,
+              max: columnsChangedRef.current ?? 1,
+              offset: resizeOffsetClientColumn.current,
+              startBefore: resizingChildBefore.current?.columnStart ?? 1,
+              endBefore: resizingChildBefore.current?.columnEnd ?? 1,
+              target: 'end',
+              expandable: columnExpandableParsed ?? false,
+            })
+            resizingChildRef.current.columns = columnEnd - columnStart
+            resizingChildRef.current.columnStart = columnStart
+            resizingChildRef.current.columnEnd = columnEnd
+            setResizingChildState(resizingChildRef.current)
+            props.updateCells?.(props.cells ? [...props.cells] : [])
+
+            if (columnExpandableParsed) {
+              // 向右扩展
+              columnsChangedRef.current = calcMaxCount('columns', columnsParsed.current)
+              setColumnsChangedState(columnsChangedRef.current)
+            }
           }
         }
-      }
 
-      // 滚动跟随
-      scrollIntoViewIfNeeded(resizingChildEle.current)
-    }
-  }, [])
+        // 滚动跟随
+        scrollIntoViewIfNeeded(resizingChildEle.current)
+      }
+    },
+    [
+      calcMaxCount,
+      columnExpandableParsed,
+      context.state.dragging,
+      context.state.resizing,
+      props,
+      rowExpandableParsed,
+      scrollIntoViewIfNeeded,
+    ]
+  )
 
   // 拖动结束
-  const dragEnd = useCallback((e: MouseEvent) => {
-    // 计算 点击拖动偏移量
-    clickOffsetX.current = e.clientX - clickStartX.current
-    clickOffsetY.current = e.clientY - clickStartY.current
+  const dragEnd = useCallback(
+    (e: MouseEvent) => {
+      // 计算 点击拖动偏移量
+      clickOffsetX.current = e.clientX - clickStartX.current
+      clickOffsetY.current = e.clientY - clickStartY.current
 
-    // 状态重置
-    {
-      resizingReset()
-      dragReset()
-    }
-  }, [])
+      // 状态重置
+      {
+        resizingReset()
+        dragReset()
+      }
+    },
+    [dragReset, resizingReset]
+  )
 
   // 清除选择
   const clearSelection = useCallback(() => {
@@ -935,21 +977,24 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       resizingReset()
       dragReset()
     }
-  }, [])
+  }, [context, dragReset, props, resizingReset])
 
   // 选择
-  const select = useCallback((cell: GridDragResizeItemProps) => {
-    if (Math.abs(clickOffsetX.current) < 5 && Math.abs(clickOffsetY.current) < 5) {
-      // debugger
-      context.state.selectedChild = cell
-      context.setState({ ...context.state })
-      props.updateSelectedChild?.(cell)
-      props.select?.(cell)
-    }
-  }, [])
+  const select = useCallback(
+    (cell: GridDragResizeItemProps) => {
+      if (Math.abs(clickOffsetX.current) < 5 && Math.abs(clickOffsetY.current) < 5) {
+        // debugger
+        context.state.selectedChild = cell
+        context.setState({ ...context.state })
+        props.updateSelectedChild?.(cell)
+        props.select?.(cell)
+      }
+    },
+    [context, props]
+  )
 
   // 选择 调整大小
-  const selectResizing = useCallback((cell: GridDragResizeItemProps) => {
+  const selectResizing = (cell: GridDragResizeItemProps) => {
     if (Math.abs(clickOffsetX.current) < 5 && Math.abs(clickOffsetY.current) < 5) {
       resizingChildRef.current = cell
       setResizingChildState(resizingChildRef.current)
@@ -960,7 +1005,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       draggingChildRect.current = undefined
       draggingChildEle.current = undefined
     }
-  }, [])
+  }
 
   useEffect(() => {
     window.addEventListener('mousedown', dragStart)
@@ -968,7 +1013,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     return () => {
       window.removeEventListener('mousedown', dragStart)
     }
-  }, [])
+  }, [dragStart])
 
   useEffect(() => {
     window.addEventListener('mousemove', dragMove)
@@ -976,7 +1021,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     return () => {
       window.removeEventListener('mousemove', dragMove)
     }
-  }, [])
+  }, [dragMove])
 
   useEffect(() => {
     window.addEventListener('mouseup', dragEnd)
@@ -984,7 +1029,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     return () => {
       window.removeEventListener('mouseup', dragEnd)
     }
-  }, [])
+  }, [dragEnd])
 
   // 点击空白区域，清空选择
   useEffect(() => {
@@ -993,157 +1038,170 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     return () => {
       window.removeEventListener('click', clearSelection)
     }
-  }, [])
+  }, [clearSelection])
 
   // 拖入中
-  const dropOver = useCallback((e: DragEvent) => {
-    if (droppableInDefault.current) {
-      e.stopPropagation()
-      e.preventDefault()
+  const dropOver = useCallback(
+    (e: DragEvent) => {
+      if (droppableInDefault.current) {
+        e.stopPropagation()
+        e.preventDefault()
 
-      if (context.state.droppingEle !== rootEle.current) {
-        context.state.droppingEle = rootEle.current ?? undefined
-      }
-
-      // console.log('dropOver droppingChildParsed.current', droppingChildParsed.current)
-      if (droppingChildParsed.current) {
-        // 当前拖动子组件的 grid 大小
-        const rowSpan = droppingChildParsed.current?.rows ?? 1
-        const columnSpan = droppingChildParsed.current?.columns ?? 1
-
-        const rootRect = rootEle?.current?.getBoundingClientRect() ?? {
-          height: 0,
-          width: 0,
-          x: 0,
-          y: 0,
-          bottom: 0,
-          right: 0,
+        if (context.state.droppingEle !== rootEle.current) {
+          context.state.droppingEle = rootEle.current ?? undefined
+          context.setState({ ...context.state })
         }
 
-        // 相对于 组件 的鼠标位置（并考虑 相对于 当前拖动子组件 的鼠标位置）
-        let posY = e.clientY - rootRect.y
-        if (posY < 0) {
-          posY = 0
-        } else if (!rowExpandableParsed && posY > rootRect.height) {
-          posY = rootRect.height
-        }
-
-        let posX = e.clientX - rootRect.x
-        if (posX < 0) {
-          posX = 0
-        } else if (!columnExpandableParsed && posX > rootRect.width) {
-          posX = rootRect.width
-        }
-
-        // 计算行方向上，移动后最新的位置和大小
-        const { start: rowStart, end: rowEnd } = calcDragStartEndByPos({
-          size: rowSize,
-          gap: gapParsed.current,
-          span: rowSpan,
-          max: rowsChangedRef.current ?? 1,
-          pos: posY,
-          expandable: rowExpandableParsed ?? false,
-        })
-
-        // 更新 当前拖入子组件的数据项
         if (droppingChildParsed.current) {
-          droppingChildParsed.current.rowStart = rowStart
-          droppingChildParsed.current.rowEnd = rowEnd
-        }
+          // 当前拖动子组件的 grid 大小
+          const rowSpan = droppingChildParsed.current?.rows ?? 1
+          const columnSpan = droppingChildParsed.current?.columns ?? 1
 
-        if (rowExpandableParsed) {
-          // 向下扩展
-          rowsChangedRef.current = calcMaxCount(
-            'rows',
-            rowsParsed.current,
-            droppingChildParsed.current ? [droppingChildParsed.current] : []
-          )
-          setRowsChangedState(rowsChangedRef.current)
-        }
+          const rootRect = rootEle?.current?.getBoundingClientRect() ?? {
+            height: 0,
+            width: 0,
+            x: 0,
+            y: 0,
+            bottom: 0,
+            right: 0,
+          }
 
-        // 计算列方向上，移动后最新的位置和大小
-        const { start: columnStart, end: columnEnd } = calcDragStartEndByPos({
-          size: columnSize,
-          gap: gapParsed.current,
-          span: columnSpan,
-          max: columnsChangedRef.current ?? 1,
-          pos: posX,
-          expandable: columnExpandableParsed ?? false,
-        })
+          // 相对于 组件 的鼠标位置（并考虑 相对于 当前拖动子组件 的鼠标位置）
+          let posY = e.clientY - rootRect.y
+          if (posY < 0) {
+            posY = 0
+          } else if (!rowExpandableParsed && posY > rootRect.height) {
+            posY = rootRect.height
+          }
 
-        // 更新 当前拖入子组件的数据项
-        if (droppingChildParsed.current) {
-          droppingChildParsed.current.columnStart = columnStart
-          droppingChildParsed.current.columnEnd = columnEnd
-        }
+          let posX = e.clientX - rootRect.x
+          if (posX < 0) {
+            posX = 0
+          } else if (!columnExpandableParsed && posX > rootRect.width) {
+            posX = rootRect.width
+          }
 
-        if (columnExpandableParsed) {
-          // 向右扩展
-          columnsChangedRef.current = calcMaxCount(
-            'columns',
-            columnsParsed.current,
-            droppingChildParsed.current ? [droppingChildParsed.current] : []
-          )
-          setColumnsChangedState(columnsChangedRef.current)
+          // // 计算行方向上，移动后最新的位置和大小
+          const { start: rowStart, end: rowEnd } = calcDragStartEndByPos({
+            size: getRowSize(),
+            gap: gapParsed.current,
+            span: rowSpan,
+            max: rowsChangedRef.current ?? 1,
+            pos: posY,
+            expandable: rowExpandableParsed ?? false,
+          })
+
+          // 更新 当前拖入子组件的数据项
+          if (droppingChildParsed.current) {
+            droppingChildParsed.current.rowStart = rowStart
+            droppingChildParsed.current.rowEnd = rowEnd
+            setDroppingChildState({ ...droppingChildParsed.current })
+          }
+
+          if (rowExpandableParsed) {
+            // 向下扩展
+            rowsChangedRef.current = calcMaxCount(
+              'rows',
+              rowsParsed.current,
+              droppingChildParsed.current ? [droppingChildParsed.current] : []
+            )
+            setRowsChangedState(rowsChangedRef.current)
+          }
+
+          // 计算列方向上，移动后最新的位置和大小
+          const { start: columnStart, end: columnEnd } = calcDragStartEndByPos({
+            size: getColumnSize(),
+            gap: gapParsed.current,
+            span: columnSpan,
+            max: columnsChangedRef.current ?? 1,
+            pos: posX,
+            expandable: columnExpandableParsed ?? false,
+          })
+
+          // 更新 当前拖入子组件的数据项
+          if (droppingChildParsed.current) {
+            droppingChildParsed.current.columnStart = columnStart
+            droppingChildParsed.current.columnEnd = columnEnd
+            setDroppingChildState({ ...droppingChildParsed.current })
+          }
+
+          if (columnExpandableParsed) {
+            // 向右扩展
+            columnsChangedRef.current = calcMaxCount(
+              'columns',
+              columnsParsed.current,
+              droppingChildParsed.current ? [droppingChildParsed.current] : []
+            )
+            setColumnsChangedState(columnsChangedRef.current)
+          }
         }
       }
-    }
-  }, [])
+    },
+    [context, calcMaxCount, columnExpandableParsed, rowExpandableParsed, getColumnSize, getRowSize]
+  )
 
   // 拖入结束
-  const drop = useCallback((e: DragEvent) => {
-    if (droppableInDefault.current) {
-      e.stopPropagation()
-      e.preventDefault()
+  const drop = useCallback(
+    (e: DragEvent) => {
+      if (droppableInDefault.current) {
+        e.stopPropagation()
+        e.preventDefault()
 
-      // 在自己的 parent drop 不算数
-      if (droppingChildParsed.current && !droppingSelfOrParentState) {
-        // 拖出删除
-        context.state.droppingChildRemove?.()
+        // 在自己的 parent drop 不算数
+        if (droppingChildParsed.current && !droppingSelfOrParentState) {
+          // 拖出删除
+          context.state.droppingChildRemove?.()
 
-        let cell = { ...droppingChildParsed.current }
-        if (beforeDropParsed.current instanceof Function) {
-          const res = beforeDropParsed.current(cell)
-          if (res instanceof Promise) {
-            res
-              .then((c) => {
-                cell = c ?? cell
+          let cell = { ...droppingChildParsed.current }
+          if (beforeDropParsed.current instanceof Function) {
+            const res = beforeDropParsed.current(cell)
+            if (res instanceof Promise) {
+              res
+                .then((c) => {
+                  cell = c ?? cell
 
-                props.cells?.push(cell)
-                // setCellsState(cellsParsed.current)
-                props.updateCells?.(props.cells ? [...props.cells] : [])
-              })
-              .catch((e) => {
-                console.error(e)
-              })
+                  props.cells?.push(cell)
+                  // setCellsState(cellsParsed.current)
+                  props.updateCells?.(props.cells ? [...props.cells] : [])
+                })
+                .catch((e) => {
+                  console.error(e)
+                })
+            } else {
+              cell = res ?? cell
+
+              props.cells?.push(cell)
+              // setCellsState(cellsParsed.current)
+              props.updateCells?.(props.cells ? [...props.cells] : [])
+            }
           } else {
-            cell = res ?? cell
-
+            // cellsParsed.current.push(cell)
             props.cells?.push(cell)
             // setCellsState(cellsParsed.current)
             props.updateCells?.(props.cells ? [...props.cells] : [])
           }
-        } else {
-          // cellsParsed.current.push(cell)
-          props.cells?.push(cell)
-          // setCellsState(cellsParsed.current)
-          props.updateCells?.(props.cells ? [...props.cells] : [])
         }
+
+        droppingChildClear()
       }
+    },
+    [context.state, droppingChildClear, droppingSelfOrParentState, props]
+  )
 
-      droppingChildClear()
-    }
-  }, [])
-
+  // TODO: 多次改变 Listener
   useEffect(() => {
-    if (sub) {
+    if (!sub) {
+      // console.log('addEventListener')
       window.addEventListener('dragover', dropOver)
     }
 
     return () => {
-      window.removeEventListener('dragover', dropOver)
+      if (!sub) {
+        // console.log('removeEventListener')
+        window.removeEventListener('dragover', dropOver)
+      }
     }
-  }, [sub])
+  }, [dropOver])
 
   // 是否阻止事件传递
   const shouldStop = useMemo(() => {
@@ -1161,65 +1219,72 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     // 假如没有上面的逻辑，均返回 true （阻止）
     // 将会导致高层的 GridDragResize 往内部 resize 的时候失效
     return true
-  }, [context.state.actionEle, rootEleState])
+  }, [context.state, rootEleState])
 
   const draggingBlank = useRef(false)
 
   // 嵌套时，控制事件传递
-  const subDragStart = useCallback((e: MouseEvent) => {
-    draggingBlank.current = e.target === rootEle.current
+  const subDragStart = useCallback(
+    (e: MouseEvent) => {
+      draggingBlank.current = e.target === rootEle.current
 
-    if (sub && shouldStop && !draggingBlank.current) {
-      e.stopPropagation()
+      if (sub && shouldStop && !draggingBlank.current) {
+        e.stopPropagation()
 
-      dragStart(e)
-    }
-  }, [])
+        dragStart(e)
+      }
+    },
+    [sub, dragStart, shouldStop]
+  )
 
-  const subDragMove = useCallback((e: MouseEvent) => {
-    // console.log(
-    //   'subDragMove',
-    //   sub,
-    //   shouldStop,
-    //   draggingBlank.current
-    //   // props.parentProps,
-    //   // parentPropsState
-    // )
-    if (sub && shouldStop && !draggingBlank.current) {
-      e.stopPropagation()
+  const subDragMove = useCallback(
+    (e: MouseEvent) => {
+      if (sub && shouldStop && !draggingBlank.current) {
+        e.stopPropagation()
 
-      dragMove(e)
-    }
-  }, [])
+        dragMove(e)
+      }
+    },
+    [dragMove, shouldStop, sub]
+  )
 
-  const subDragEnd = useCallback((e: MouseEvent) => {
-    if (sub && shouldStop && !draggingBlank.current) {
-      e.stopPropagation()
+  const subDragEnd = useCallback(
+    (e: MouseEvent) => {
+      if (sub && shouldStop && !draggingBlank.current) {
+        e.stopPropagation()
 
-      dragEnd(e)
-    }
+        dragEnd(e)
+      }
 
-    draggingBlank.current = false
-  }, [])
+      draggingBlank.current = false
+    },
+    [dragEnd, shouldStop, sub]
+  )
 
-  const subClick = useCallback((e: MouseEvent) => {
-    if (sub && e.target !== rootEle.current) {
-      e.stopPropagation()
+  const subClick = useCallback(
+    (e: MouseEvent) => {
+      if (sub && e.target !== rootEle.current) {
+        e.stopPropagation()
 
-      clearSelection()
-    }
-  }, [])
+        clearSelection()
+      }
+    },
+    [sub, clearSelection]
+  )
 
   // 移除
-  const remove = useCallback((cell: GridDragResizeItemProps) => {
-    if (props.cells) {
-      const idx = props.cells.findIndex((o) => o === cell)
-      if (idx > -1) {
-        props.cells.splice(idx, 1)
-        props.updateCells?.(props.cells ? [...props.cells] : [])
+  const remove = useCallback(
+    (cell: GridDragResizeItemProps) => {
+      if (props.cells) {
+        const idx = props.cells.findIndex((o) => o === cell)
+        if (idx > -1) {
+          props.cells.splice(idx, 1)
+          props.updateCells?.(props.cells ? [...props.cells] : [])
+        }
       }
-    }
-  }, [])
+    },
+    [props]
+  )
 
   // 克隆
   const deepClone = useCallback((cell: Record<string, any>): GridDragResizeItemProps => {
@@ -1249,7 +1314,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
 
       props.updateDroppingChild?.(context.state.droppingChild)
     },
-    []
+    [context, deepClone, props]
   )
 
   const dropStart = useCallback(
@@ -1262,16 +1327,19 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     ) => {
       cellDropStart(cell, val)
     },
-    []
+    [cellDropStart]
   )
 
-  const subDropOver = useCallback((e: DragEvent) => {
-    if (sub && droppableInDefault.current) {
-      e.stopPropagation()
+  const subDropOver = useCallback(
+    (e: DragEvent) => {
+      if (sub && droppableInDefault.current) {
+        e.stopPropagation()
 
-      dropOver(e)
-    }
-  }, [])
+        dropOver(e)
+      }
+    },
+    [dropOver, sub]
+  )
 
   // 内部互 drop 结束
   const cellDropEnd = useCallback(() => {
@@ -1294,7 +1362,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
           ref: rootEle,
           style: {
             ...props.style,
-            ...style,
           },
         },
         props.children
@@ -1322,6 +1389,9 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
           onClick: subClick,
         },
         <>
+          {/* droppingState:{droppingState ? 'Y' : 'N'} <br /> */}
+          {/* droppingChildState:{droppingChildState ? 'Y' : 'N'} */}
+          {/* {droppingChildState?.rowStart} */}
           {props.cells?.map((cell, idx) => {
             const key = idGen(cell)
             return (
@@ -1432,10 +1502,7 @@ export default function GridDragResize(props: GridDragResizeComponent) {
 
   const context = useContext(GridDragResizeContext) ?? {
     state,
-    setState: (...args) => {
-      // console.trace()
-      setState(...args)
-    },
+    setState,
   }
   return (
     <GridDragResizeContext.Provider value={context}>
