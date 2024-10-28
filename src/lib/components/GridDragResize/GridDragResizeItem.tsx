@@ -100,7 +100,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
 
   // Props 的 useState 默认值处理
   useEffect(() => {
-    setDroppableOutDefaultState(droppableOutDefault.current)
+    setDroppableOutDefaultState(droppableOutParsed.current ?? true)
   }, [props.droppableOut])
   useEffect(() => {
     setDropOutHandlerState(dropOutHandlerParsed.current)
@@ -109,7 +109,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     setRemoveHandlerState(removeHandlerParsed.current)
   }, [props.removeHandler])
   useEffect(() => {
-    setRemovableDefaultState(removableDefault.current)
+    setRemovableDefaultState(removableParsed.current ?? true)
   }, [props.removable])
   useEffect(() => {
     setOverflowState(overflowParsed.current)
@@ -118,7 +118,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     setDragHandlerState(dragHandlerParsed.current)
   }, [props.dragHandler])
   useEffect(() => {
-    setDraggableDefaultState(draggableDefault.current)
+    setDraggableDefaultState(draggableParsed.current ?? true)
   }, [props.draggable])
   useEffect(() => {
     setColumnStartState(columnStartParsed.current)
@@ -165,6 +165,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       draggable: draggableParsed.current,
       resizable: resizableParsed.current,
       removable: removableParsed.current,
+      droppableIn: props.droppableIn,
       droppableOut: droppableOutParsed.current,
       //
       debug: debugParsed.current,

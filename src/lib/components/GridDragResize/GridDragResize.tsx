@@ -70,7 +70,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   const suffixClassParsed = useRef<string | undefined>()
   const TagNameParsed = useRef('div')
   const droppingChildParsed = useRef<GridDragResizeItemProps | undefined>()
-  const parentPropsParsed = useRef<GridDragResizeProps | undefined>()
 
   // Props 的 useRef 默认值处理
   const droppableInDefault = useRef<boolean | undefined>()
@@ -96,15 +95,14 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     droppableOutParsed.current = readonlyParsed.current
       ? false
       : (props.droppableOut ?? props.parentProps?.droppableOut)
-    droppableInDefault.current = droppableOutParsed.current ?? true
     debugParsed.current = props.debug ?? props.parentProps?.debug
     droppableInParsed.current = readonlyParsed.current
       ? false
       : (props.droppableIn ?? props.parentProps?.droppableIn)
+    droppableInDefault.current = droppableInParsed.current ?? true
     beforeDropParsed.current = props.beforeDrop ?? props.parentProps?.beforeDrop
     suffixClassParsed.current = props.suffixClass || props.parentProps?.suffixClass
     TagNameParsed.current = props.tagName || props.parentProps?.tagName || 'div'
-    parentPropsParsed.current = { ...props.parentProps }
   }, [props])
 
   useEffect(() => {
@@ -140,8 +138,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [])
 
   // 下发父配置
-  const [parentPropsState, setParentPropsState] = useState(parentPropsParsed.current)
-  const parentProps = useRef({ ...props })
+  const [parentPropsState, setParentPropsState] = useState<GridDragResizeProps['parentProps']>()
+  const parentProps = useRef<GridDragResizeProps['parentProps']>()
 
   useEffect(() => {
     parentProps.current = {
@@ -1365,7 +1363,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
           {props.cells?.map((cell, idx) => {
             const key = idGen(cell)
             return (
-              // TODO: updateXXX 是否会同步 cell.xxx
               <GridDragResizeItem
                 key={key}
                 {...{
