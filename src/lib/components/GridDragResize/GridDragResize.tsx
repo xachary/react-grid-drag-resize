@@ -82,7 +82,9 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     dragHandlerParsed.current = props.dragHandler || props.parentProps?.dragHandler
     dropOutHandlerParsed.current = props.dropOutHandler || props.parentProps?.dropOutHandler
     removeHandlerParsed.current = props.removeHandler || props.parentProps?.removeHandler
+
     readonlyParsed.current = props.readonly ?? props.parentProps?.readonly
+
     draggableParsed.current = readonlyParsed.current
       ? false
       : (props.draggable ?? props.parentProps?.draggable)
@@ -118,10 +120,10 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   // Props 的 useState 默认值处理
   useEffect(() => {
     setTagNameState(TagNameParsed.current)
-  }, [props.tagName])
+  }, [props.tagName, props.parentProps?.tagName])
   useEffect(() => {
     setDroppingChildState(droppingChildParsed.current)
-  }, [props.droppingChild])
+  }, [props.droppingChild, context.state.droppingChild])
   useEffect(() => {
     setSuffixClassState(suffixClassParsed.current)
   }, [props.suffixClass])
@@ -1472,7 +1474,10 @@ export default function GridDragResize(props: GridDragResizeComponent) {
   }
   return (
     <GridDragResizeContext.Provider value={context}>
-      <GridDragResizeWithTagName {...props} parentProps={props}></GridDragResizeWithTagName>
+      <GridDragResizeWithTagName
+        {...props}
+        parentProps={{ ...props.parentProps, ...props }}
+      ></GridDragResizeWithTagName>
     </GridDragResizeContext.Provider>
   )
 }
