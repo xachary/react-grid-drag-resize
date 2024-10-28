@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react'
 
-import type { GridDragResizeItemProps } from './types'
+import type { GridDragResizeItemProps, GridDragResizeProps } from './types'
 
 type GridDragResizeItemComponent = GridDragResizeItemProps & {
   className?: string
@@ -41,7 +41,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const removableParsed = useRef<boolean | undefined>()
   const droppableOutParsed = useRef<boolean | undefined>()
   const debugParsed = useRef<boolean | undefined>()
-  const parentPropsParsed = useRef<GridDragResizeItemProps | undefined>()
+  const parentPropsParsed = useRef<GridDragResizeProps | undefined>()
 
   // Props 的 useRef 默认值处理
   const draggableDefault = useRef<boolean | undefined>()
@@ -149,11 +149,11 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
 
   // 下发父配置
   const [parentPropsState, setParentPropsState] = useState(parentPropsParsed.current)
-  const parentProps = useRef({ ...props })
+  const parentProps = useRef({ ...parentPropsParsed.current })
 
   useEffect(() => {
     parentProps.current = {
-      ...props,
+      ...parentPropsParsed.current,
       //
       dragHandler: dragHandlerParsed.current,
       dropOutHandler: dropOutHandlerParsed.current,
@@ -574,6 +574,9 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
             {...props.grid}
             droppingChild={context?.state.droppingChild}
             parentProps={parentPropsState}
+            updateCells={() =>
+              parentPropsState?.updateCells?.([...(parentPropsState?.cells ?? [])])
+            }
           ></GridDragResize>
         ) : (
           props.render?.(props)

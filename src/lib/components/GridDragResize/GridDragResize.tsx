@@ -45,12 +45,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
 
   // 判断嵌套
   const sub = useMemo(() => props.parentProps !== void 0, [props.parentProps])
-  useEffect(() => {
-    // console.log(1, sub, props)
-  }, [sub])
-  // console.log(2, sub, props)
-
-  // console.log(props.parentProps)
 
   // Props 转 useRef
   const columnsParsed = useRef(1)
@@ -76,7 +70,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   const suffixClassParsed = useRef<string | undefined>()
   const TagNameParsed = useRef('div')
   const droppingChildParsed = useRef<GridDragResizeItemProps | undefined>()
-  const parentPropsParsed = useRef<GridDragResizeItemProps | undefined>()
+  const parentPropsParsed = useRef<GridDragResizeProps | undefined>()
 
   // Props 的 useRef 默认值处理
   const droppableInDefault = useRef<boolean | undefined>()
@@ -219,16 +213,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   const [droppingState, setDroppingState] = useState(false)
 
   useEffect(() => {
-    // console.log(
-    //   'setDroppingState',
-    //   context.state.droppingEle === rootEleState && !droppingSelfOrParentState
-    // )
-    // console.log(
-    //   'setDroppingState 2',
-    //   context.state.droppingEle,
-    //   rootEleState,
-    //   !droppingSelfOrParentState
-    // )
     setDroppingState(context.state.droppingEle === rootEleState && !droppingSelfOrParentState)
   }, [context.state.droppingEle, rootEleState, droppingSelfOrParentState])
 
@@ -345,7 +329,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       setColumnsChangedState(columnsChangedRef.current)
       props.updateColumns?.(columnsChangedRef.current)
     }
-  }, [props.rows, props.columns])
+  }, [props.rows, props.columns, calcMaxCount])
 
   // ! 自动计算（书写习惯：从左向右、从上向下）
   useEffect(() => {
@@ -486,8 +470,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     resizeOffsetClientColumn = useRef(0)
 
   // 当前拖动子组件的数据项
-  const draggingChild = useRef<GridDragResizeItemProps | undefined>()
-  const [draggingChildState, setDraggingChildState] = useState(draggingChild.current)
+  const draggingChildRef = useRef<GridDragResizeItemProps | undefined>()
+  const [draggingChildState, setDraggingChildState] = useState(draggingChildRef.current)
   // 当前拖动子组件的数据项（初始状态）
   const draggingChildBefore = useRef<GridDragResizeItemProps | undefined>()
   // 当前拖动子组件的位置、大小信息
@@ -553,8 +537,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     // 虚拟地在 grid 四边补充二分之一的 gap 距离
     // 如此，通过计算 拖动位置（相对于组件）与 大小+间隙 的倍数即可
     let start = size + gap ? Math.ceil((pos + gap / 2) / (size + gap)) : 0
-
-    // console.log(pos + gap / 2, size + gap)
 
     if (start < 1) {
       start = 1
@@ -640,13 +622,12 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   }, [context, stateInjectActionDown])
 
   const dragReset = useCallback(() => {
-    // console.log('dragging = false')
     context.state.dragging = false
     context.setState({ ...context.state })
     stateInjectActionDown(false)
 
-    draggingChild.current = undefined
-    setDraggingChildState(draggingChild.current)
+    draggingChildRef.current = undefined
+    setDraggingChildState(draggingChildRef.current)
     draggingChildBefore.current = undefined
     draggingChildRect.current = undefined
     draggingChildEle.current = undefined
@@ -727,8 +708,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
 
   // 更新拖动信息
   function updateDrag(cell: GridDragResizeItemProps, rect: DOMRect, target: HTMLElement) {
-    draggingChild.current = cell
-    setDraggingChildState(draggingChild.current)
+    draggingChildRef.current = cell
+    setDraggingChildState(draggingChildRef.current)
     draggingChildBefore.current = { ...cell }
     draggingChildRect.current = rect
     draggingChildEle.current = target
@@ -741,14 +722,11 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       clickStartX.current = e.clientX
       clickStartY.current = e.clientY
 
-      // console.log(draggingChild.current)
-
       if (!readonlyParsed.current) {
-        if (draggingChild.current && draggingChildRect.current) {
+        if (draggingChildRef.current && draggingChildRect.current) {
           // 状态互斥
           resizingReset()
 
-          // console.log('dragging = true')
           context.state.dragging = true
           context.setState({ ...context.state })
 
@@ -766,19 +744,18 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   // 拖动中
   const dragMove = useCallback(
     (e: MouseEvent) => {
-      // console.log('draggingChild.current', context.state.dragging, props.columns)
-      if (context.state.dragging && draggingChild.current) {
+      if (context.state.dragging && draggingChildRef.current) {
         // 计算 拖动偏移量
         dragOffsetClientColumn.current = e.clientX - dragStartClientX.current
         dragOffsetClientRow.current = e.clientY - dragStartClientY.current
 
         // 当前拖动子组件的 grid 大小
         let rowSpan =
-          (draggingChild.current.rowEnd ?? draggingChild.current.rowStart ?? 1) -
-          (draggingChild.current.rowStart ?? 1)
+          (draggingChildRef.current.rowEnd ?? draggingChildRef.current.rowStart ?? 1) -
+          (draggingChildRef.current.rowStart ?? 1)
         let columnSpan =
-          (draggingChild.current.columnEnd ?? draggingChild.current.columnStart ?? 1) -
-          (draggingChild.current.columnStart ?? 1)
+          (draggingChildRef.current.columnEnd ?? draggingChildRef.current.columnStart ?? 1) -
+          (draggingChildRef.current.columnStart ?? 1)
 
         // 边界处理
         {
@@ -828,17 +805,17 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         }
 
         // 更新 当前拖动子组件的数据项
-        draggingChild.current.columnStart = columnStart
-        draggingChild.current.columnEnd = columnEnd
-        draggingChild.current.rowStart = rowStart
-        draggingChild.current.rowEnd = rowEnd
+        draggingChildRef.current.columnStart = columnStart
+        draggingChildRef.current.columnEnd = columnEnd
+        draggingChildRef.current.rowStart = rowStart
+        draggingChildRef.current.rowEnd = rowEnd
 
         props.updateCells?.(props.cells ? [...props.cells] : [])
 
         // 滚动跟随
         scrollIntoViewIfNeeded(draggingChildEle.current)
       }
-      if (context.state.resizing) {
+      if (context.state.resizing && resizingChildRef.current) {
         // 计算 调整大小拖动偏移量
         resizeOffsetClientColumn.current = e.clientX - resizeStartClientX.current
         resizeOffsetClientRow.current = e.clientY - resizeStartClientY.current
@@ -939,6 +916,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       props,
       rowExpandableParsed,
       scrollIntoViewIfNeeded,
+      getColumnSize,
+      getRowSize,
     ]
   )
 
@@ -999,8 +978,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       resizingChildRef.current = cell
       setResizingChildState(resizingChildRef.current)
 
-      draggingChild.current = undefined
-      setDraggingChildState(draggingChild.current)
+      draggingChildRef.current = undefined
+      setDraggingChildState(draggingChildRef.current)
       draggingChildBefore.current = undefined
       draggingChildRect.current = undefined
       draggingChildEle.current = undefined
@@ -1161,7 +1140,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
                   cell = c ?? cell
 
                   props.cells?.push(cell)
-                  // setCellsState(cellsParsed.current)
                   props.updateCells?.(props.cells ? [...props.cells] : [])
                 })
                 .catch((e) => {
@@ -1171,13 +1149,10 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
               cell = res ?? cell
 
               props.cells?.push(cell)
-              // setCellsState(cellsParsed.current)
               props.updateCells?.(props.cells ? [...props.cells] : [])
             }
           } else {
-            // cellsParsed.current.push(cell)
             props.cells?.push(cell)
-            // setCellsState(cellsParsed.current)
             props.updateCells?.(props.cells ? [...props.cells] : [])
           }
         }
@@ -1348,8 +1323,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     droppingChildClear()
   }, [clearSelection, droppingChildClear])
 
-  // console.log('grid', parentPropsState)
-
   return props.children
     ? createElement(
         TagNameState,
@@ -1389,9 +1362,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
           onClick: subClick,
         },
         <>
-          {/* droppingState:{droppingState ? 'Y' : 'N'} <br /> */}
-          {/* droppingChildState:{droppingChildState ? 'Y' : 'N'} */}
-          {/* {droppingChildState?.rowStart} */}
           {props.cells?.map((cell, idx) => {
             const key = idGen(cell)
             return (
@@ -1482,7 +1452,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
               style={{
                 zIndex: (props.cells?.length ?? 0) + 3,
               }}
-              parentProps={parentPropsState}
             ></GridDragResizeItem>
           )}
         </>
@@ -1506,8 +1475,7 @@ export default function GridDragResize(props: GridDragResizeComponent) {
   }
   return (
     <GridDragResizeContext.Provider value={context}>
-      {/* {context.state.hoverEle?.style.gridArea} */}
-      <GridDragResizeWithTagName {...props}></GridDragResizeWithTagName>
+      <GridDragResizeWithTagName {...props} parentProps={props}></GridDragResizeWithTagName>
     </GridDragResizeContext.Provider>
   )
 }
