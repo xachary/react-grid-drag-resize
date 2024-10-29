@@ -253,7 +253,8 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       context.state.droppingChild = { ...props.droppingChild }
       context.setState({ ...context.state })
     }
-  }, [props.droppingChild, context])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.droppingChild])
 
   // 清空 drop 相关状态
   const droppingChildClear = useCallback(() => {
