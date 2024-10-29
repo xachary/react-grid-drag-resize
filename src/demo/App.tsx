@@ -2,6 +2,9 @@ import './App.less'
 
 import { useState } from 'react'
 
+// import { GridDragResize } from '../../dist'
+// import type { GridDragResizeProps, GridDragResizeItemProps } from '../../dist'
+
 import { GridDragResize } from '@/lib/components/GridDragResize'
 import type {
   GridDragResizeProps,
