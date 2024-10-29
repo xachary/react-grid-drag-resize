@@ -1,8 +1,17 @@
 {
   "name": "react-grid-drag-resize",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.0.2",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "homepage": "https://xachary.github.io/react-grid-drag-resize/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xachary/react-grid-drag-resize"
+  },
   "scripts": {
     "dev": "vite --port 7174",
     "build": "tsc -b && vite build",
@@ -13,7 +22,8 @@
   },
   "dependencies": {
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-grid-drag-resize": "^0.0.2"
   },
   "devDependencies": {
     "@commitlint/cli": "19.2.1",

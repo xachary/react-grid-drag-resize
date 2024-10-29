@@ -5,6 +5,9 @@ import { useState } from 'react'
 // import { GridDragResize } from '../../dist'
 // import type { GridDragResizeProps, GridDragResizeItemProps } from '../../dist'
 
+// import { GridDragResize } from 'react-grid-drag-resize'
+// import type { GridDragResizeProps, GridDragResizeItemProps } from 'react-grid-drag-resize'
+
 import { GridDragResize } from '@/lib/components/GridDragResize'
 import type {
   GridDragResizeProps,
