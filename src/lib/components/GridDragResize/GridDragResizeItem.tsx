@@ -20,6 +20,9 @@ import { GridDragResizeContext } from './context'
 
 import GridDragResize from './GridDragResize'
 
+// TODO: 拖入后，hover 样式没立即生效
+// TODO: 性能问题
+
 export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   // 穿透上下文
   const context = useContext(GridDragResizeContext)
@@ -211,7 +214,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const [hoverState, setHoverState] = useState(hoverEleState === itemEleState)
   useEffect(() => {
     setHoverState(hoverEleState === itemEleState)
-  }, [hoverEleState])
+  }, [hoverEleState, itemEleState])
   useEffect(() => {
     setHoverEleState(context?.state.hoverEle)
   }, [context?.state.hoverEle])
@@ -231,13 +234,13 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     if (props.rows !== rowsState) {
       props.updateRows?.(rowsState)
     }
-  }, [props.rows, rowsState])
+  }, [props, rowsState])
 
   useEffect(() => {
     if (props.columns !== columnsState) {
       props.updateColumns?.(columnsState)
     }
-  }, [props.columns, columnsState])
+  }, [props, columnsState])
 
   // ............................................................
 
@@ -317,7 +320,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     props.updateRowStart?.(rowStart)
     props.updateRowEnd?.(rowEnd)
     props.updateRows?.(rows)
-  }, [props.columnStart, props.columnEnd, props.columns, props.rowStart, props.rowEnd, props.rows])
+  }, [props])
 
   // 拖动开始
   const dragstart = useCallback(
@@ -380,7 +383,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     return () => {
       window.removeEventListener('mousedown', dragstart)
     }
-  }, [draggableDefaultState, dragHandlerState])
+  }, [draggableDefaultState, dragHandlerState, dragstart])
 
   // dropOutHandler 定位、处理、事件绑定
   const mousedownLastDrop = useRef<(e: MouseEvent) => void>()
@@ -437,7 +440,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
         handlerEle.addEventListener('dragend', dragendLastDrop.current)
       }
     }
-  }, [dropOutHandlerState, droppableOutDefaultState])
+  }, [dropOutHandlerState, droppableOutDefaultState, dropEnd, dropStart])
 
   // removeHandler 定位、处理、事件绑定
   const clickLastRemove = useRef<(e: MouseEvent) => void>()
@@ -483,7 +486,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
         handlerEle.addEventListener('mouseup', mouseupLastRemove.current)
       }
     }
-  }, [removableDefaultState, removeHandlerState])
+  }, [removableDefaultState, removeHandlerState, remove])
 
   // 选中
   const selectAndResizing = useCallback(

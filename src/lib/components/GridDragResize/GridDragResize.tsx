@@ -207,7 +207,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     } else {
       setDroppingSelfOrParentState(false)
     }
-  }, [context.state.droppingChildRaw, rootEleState, props.cells])
+  }, [context.state.droppingChildRaw, context.state.droppingChildEle, rootEleState, props.cells])
 
   // 拖入操作中
   const [droppingState, setDroppingState] = useState(false)
@@ -253,7 +253,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       context.state.droppingChild = { ...props.droppingChild }
       context.setState({ ...context.state })
     }
-  }, [props.droppingChild])
+  }, [props.droppingChild, context])
 
   // 清空 drop 相关状态
   const droppingChildClear = useCallback(() => {
@@ -329,7 +329,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       setColumnsChangedState(columnsChangedRef.current)
       props.updateColumns?.(columnsChangedRef.current)
     }
-  }, [props.rows, props.columns, calcMaxCount])
+  }, [props, calcMaxCount])
 
   // ! 自动计算（书写习惯：从左向右、从上向下）
   useEffect(() => {
@@ -407,7 +407,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         props.updateCells?.(props.cells ? [...props.cells] : [])
       }
     }
-  }, [props.cells])
+  }, [props])
 
   // 列宽
   const getColumnSize = useCallback(() => {
@@ -1176,7 +1176,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         window.removeEventListener('dragover', dropOver)
       }
     }
-  }, [dropOver])
+  }, [sub, dropOver])
 
   // 是否阻止事件传递
   const shouldStop = useMemo(() => {

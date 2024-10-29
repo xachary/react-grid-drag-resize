@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-import type { GridDragResizeProps, GridDragResizeItemProps } from './types'
+import type { GridDragResizeItemProps } from './types'
 
 export type GridDragResizeContextState = {
   actionEle?: HTMLElement
