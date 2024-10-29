@@ -72,7 +72,7 @@ React version of vue3-grid-drag-resize
 
 [Vue3 版本](https://github.com/xachary/vue3-grid-drag-resize) | [Vue3 version](https://github.com/xachary/vue3-grid-drag-resize)
 
-[文档（Vue3 version）](https://xachary.github.io/react-grid-drag-resize/) | [Docs (Vue3 version)](https://xachary.github.io/react-grid-drag-resize/en/)
+[文档（Vue3 version）](https://xachary.github.io/vue3-grid-drag-resize/) | [Docs (Vue3 version)](https://xachary.github.io/vue3-grid-drag-resize/en/)
 
 > 配置重命名 | Props rename
 >
