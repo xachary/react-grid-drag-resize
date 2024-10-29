@@ -68,7 +68,19 @@ React version of vue3-grid-drag-resize
 
 ## 相关信息 | Info
 
-[文档](https://xachary.github.io/react-grid-drag-resize/) | [Docs](https://xachary.github.io/react-grid-drag-resize/en/)
+[仓库](https://github.com/xachary/react-grid-drag-resize) | [Repository](https://github.com/xachary/react-grid-drag-resize)
+
+[Vue3 版本](https://github.com/xachary/vue3-grid-drag-resize) | [Vue3 version](https://github.com/xachary/vue3-grid-drag-resize)
+
+[文档（Vue3 version）](https://xachary.github.io/react-grid-drag-resize/) | [Docs (Vue3 version)](https://xachary.github.io/react-grid-drag-resize/en/)
+
+> 配置重命名 | Props rename
+>
+> "children" -&gt; "cells"
+>
+> "child" -&gt; "grid"
+>
+> v-model:xxx -&gt; xxx and updateXxx
 
 [在线示例](https://xachary.github.io/react-grid-drag-resize/demo/index.html) | [Live Demo](https://xachary.github.io/react-grid-drag-resize/demo/index.html)
 
