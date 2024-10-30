@@ -53,6 +53,9 @@ export default function ComponentG() {
       columnStart: 3,
       columnEnd: 5,
       render: ComponentH,
+      data: {
+        name: 'Component H',
+      },
     },
   ])
 
