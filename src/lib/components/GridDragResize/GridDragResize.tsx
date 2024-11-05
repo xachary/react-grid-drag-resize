@@ -421,9 +421,22 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       right: 0,
     }
 
+    let contentWidth = rootRect.width
+
+    if (rootEleState) {
+      contentWidth =
+        contentWidth -
+        [
+          parseInt(window.getComputedStyle(rootEleState).paddingLeft),
+          parseInt(window.getComputedStyle(rootEleState).paddingRight),
+        ]
+          .filter((o) => !isNaN(o))
+          .reduce((sum, item) => sum + item, 0)
+    }
+
     return (
       props.columnSize ??
-      (rootRect.width - gapState * (columnsChangedState - 1)) / columnsChangedState
+      (contentWidth - gapState * (columnsChangedState - 1)) / columnsChangedState
     )
   }, [columnsChangedState, gapState, props.columnSize, rootEleState])
 
@@ -437,7 +450,21 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       bottom: 0,
       right: 0,
     }
-    return props.rowSize ?? (rootRect.height - gapState * (rowsChangedState - 1)) / rowsChangedState
+
+    let contentHeight = rootRect.height
+
+    if (rootEleState) {
+      contentHeight =
+        contentHeight -
+        [
+          parseInt(window.getComputedStyle(rootEleState).paddingTop),
+          parseInt(window.getComputedStyle(rootEleState).paddingBottom),
+        ]
+          .filter((o) => !isNaN(o))
+          .reduce((sum, item) => sum + item, 0)
+    }
+
+    return props.rowSize ?? (contentHeight - gapState * (rowsChangedState - 1)) / rowsChangedState
   }, [rowsChangedState, gapState, props.rowSize, rootEleState])
 
   // ............................................................
