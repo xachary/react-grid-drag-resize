@@ -206,6 +206,22 @@ function App() {
         name: 'Group but readonly',
       },
     },
+    {
+      columns: 7,
+      rows: 1,
+      columnStart: 1,
+      rowStart: 11,
+      grid: {
+        suffixClass: 'fixed-size-row',
+        columns: 3,
+        rows: 3,
+        cells: [],
+        droppableIn: false,
+      },
+      data: {
+        name: 'This row size is 150px fixed',
+      },
+    },
   ])
 
   // 已拖入内容
@@ -238,6 +254,7 @@ function App() {
           <GridDragResize
             columnSize={50}
             rowSize={50}
+            rowTemplate={`repeat(10, 50px) 150px`}
             gap={10}
             overflow={'hidden'}
             columns={7}

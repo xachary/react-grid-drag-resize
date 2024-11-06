@@ -71,6 +71,7 @@ export default function ComponentH() {
           beforeDrop={beforeDrop}
           cells={cells}
           updateCells={(val) => setCells(val)}
+          columnTemplate={`repeat(2,1fr) 30px`}
         ></GridDragResize>
       </footer>
     </div>
