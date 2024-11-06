@@ -308,7 +308,9 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
             max = end - 1
           }
         }
-        return max
+
+        const count = { rows: cell.rows, columns: cell.columns }[target] ?? 1
+        return Math.max(max, count)
       }, 1)
 
       return min === void 0 ? calc : min < calc ? calc : min
@@ -367,7 +369,11 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         rowEnd = rowStart + target.rows!
 
         columnStart = 1
-        for (; columnStart + target.columns! <= columnsParsed.current + 1 && on; columnStart++) {
+        for (
+          ;
+          columnStart + target.columns! <= columnsChangedRef.current + 1 && on;
+          columnStart++
+        ) {
           columnEnd = columnStart + target.columns!
 
           //
@@ -393,10 +399,6 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
             on = false
           }
         }
-
-        if (columnStart + target.columns! > columnsParsed.current + 1) {
-          on = false
-        }
       }
 
       if (!on) {
@@ -412,7 +414,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         props.updateCells?.(props.cells ? [...props.cells] : [])
       }
     }
-  }, [props])
+  }, [props, columnsChangedState])
 
   // 列宽
   const getColumnSize = useCallback(() => {
