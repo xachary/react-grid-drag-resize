@@ -219,7 +219,7 @@ function App() {
         droppableIn: false,
       },
       data: {
-        name: 'This row size is 150px fixed',
+        name: 'This row size is 300px fixed',
       },
     },
   ])
@@ -254,7 +254,7 @@ function App() {
           <GridDragResize
             columnSize={50}
             rowSize={50}
-            rowTemplate={`repeat(10, 50px) 150px`}
+            rowTemplate={`repeat(10, 50px) 300px`}
             gap={10}
             overflow={'hidden'}
             columns={7}
