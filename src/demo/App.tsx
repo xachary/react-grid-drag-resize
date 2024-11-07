@@ -207,7 +207,7 @@ function App() {
       },
     },
     {
-      columns: 7,
+      columns: 4,
       rows: 1,
       columnStart: 1,
       rowStart: 11,
@@ -221,6 +221,24 @@ function App() {
       data: {
         name: 'This row size is 300px fixed',
       },
+    },
+    {
+      columns: 3,
+      rows: 1,
+      columnStart: 5,
+      rowStart: 11,
+      render: () => (
+        <div className="demo-item" style={{ background: '#eee' }}>
+          <button>
+            Masked
+            <br />
+            (Stop mouse event)
+            <br />
+            (Can`t click me)
+          </button>
+        </div>
+      ),
+      mask: true,
     },
   ])
 

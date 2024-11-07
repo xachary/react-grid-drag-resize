@@ -20,7 +20,6 @@ import { GridDragResizeContext } from './context'
 
 import GridDragResize from './GridDragResize'
 
-// TODO: 拖入后，hover 样式没立即生效
 // TODO: 性能问题
 
 export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
@@ -34,6 +33,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const columnEndParsed = useRef(2)
   const rowStartParsed = useRef(1)
   const rowEndParsed = useRef(2)
+  const maskParsed = useRef<boolean | undefined>()
   const dragHandlerParsed = useRef<string | undefined>()
   const dropOutHandlerParsed = useRef<string | undefined>()
   const removeHandlerParsed = useRef<string | undefined>()
@@ -59,6 +59,9 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
     columnEndParsed.current = ((props.columnEnd ?? 0) < 2 ? 2 : props.columnEnd)!
     rowStartParsed.current = ((props.rowStart ?? 0) < 1 ? 1 : props.rowStart)!
     rowEndParsed.current = ((props.rowEnd ?? 0) < 2 ? 2 : props.rowEnd)!
+
+    maskParsed.current = props.mask ?? false
+
     dragHandlerParsed.current = props.dragHandler || props.parentProps?.dragHandler
     dropOutHandlerParsed.current = props.dropOutHandler || props.parentProps?.dropOutHandler
     removeHandlerParsed.current = props.removeHandler || props.parentProps?.removeHandler
@@ -82,6 +85,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       ? false
       : (props.droppableOut ?? props.parentProps?.droppableOut)
     droppableOutDefault.current = droppableOutParsed.current ?? true
+
     debugParsed.current = props.debug ?? props.parentProps?.debug
     parentPropsParsed.current = { ...props.parentProps }
   }, [props])
@@ -102,6 +106,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const [rowEndState, setRowEndState] = useState(rowEndParsed.current)
   const [rowsState, setRowsState] = useState(rowsParsed.current)
   const [columnsState, setColumnsState] = useState(columnsParsed.current)
+  const [maskState, setMaskState] = useState(maskParsed.current)
 
   // Props 的 useState 默认值处理
   useEffect(() => {
@@ -143,14 +148,24 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   useEffect(() => {
     setColumnsState(columnsParsed.current)
   }, [props.columns])
+  useEffect(() => {
+    setMaskState(maskParsed.current ?? false)
+  }, [props.mask])
 
   // Dom
   const itemEle = useRef<HTMLDivElement | null>(null)
   const [itemEleState, setItemEleState] = useState(itemEle.current)
 
+  const maskEle = useRef<HTMLDivElement | null>(null)
+  const [maskEleState, setMaskEleState] = useState(maskEle.current)
+
   useEffect(() => {
     setItemEleState(itemEle.current)
   }, [])
+
+  useEffect(() => {
+    setMaskEleState(maskEle.current)
+  }, [maskState])
 
   // 下发父配置
   const [parentPropsState, setParentPropsState] = useState(parentPropsParsed.current)
@@ -213,8 +228,8 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const [hoverEleState, setHoverEleState] = useState(context?.state.hoverEle)
   const [hoverState, setHoverState] = useState(hoverEleState === itemEleState)
   useEffect(() => {
-    setHoverState(hoverEleState === itemEleState)
-  }, [hoverEleState, itemEleState])
+    setHoverState(hoverEleState === itemEleState || hoverEleState === maskEleState)
+  }, [hoverEleState, itemEleState, maskEleState])
   useEffect(() => {
     setHoverEleState(context?.state.hoverEle)
   }, [context?.state.hoverEle])
@@ -588,6 +603,18 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
           props.render?.(props)
         )}
       </div>
+      {maskState && (
+        <div
+          className="grid-drag-resize__item__mask"
+          onMouseDown={(e: React.MouseEvent<HTMLElement, MouseEvent>) =>
+            dragHandlerState ? undefined : dragstart(e)
+          }
+          onClick={selectAndResizing}
+          onMouseOverCapture={mouseover}
+          onMouseLeave={mouseleave}
+          ref={maskEle}
+        ></div>
+      )}
       <b className="grid-drag-resize__item__border grid-drag-resize__item__border--top"></b>
       <b className="grid-drag-resize__item__border grid-drag-resize__item__border--bottom"></b>
       <b className="grid-drag-resize__item__border grid-drag-resize__item__border--left"></b>
