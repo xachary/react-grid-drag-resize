@@ -59,6 +59,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
   const resizableParsed = useRef<boolean | undefined>()
   const removableParsed = useRef<boolean | undefined>()
   const droppableOutParsed = useRef<boolean | undefined>()
+  const maskParsed = useRef<boolean | undefined>()
   const debugParsed = useRef<boolean | undefined>()
   const droppableInParsed = useRef<boolean | undefined>()
   const beforeDropParsed = useRef<
@@ -97,6 +98,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
     droppableOutParsed.current = readonlyParsed.current
       ? false
       : (props.droppableOut ?? props.parentProps?.droppableOut)
+    maskParsed.current = props.mask ?? props.parentProps?.mask
     debugParsed.current = props.debug ?? props.parentProps?.debug
     droppableInParsed.current = readonlyParsed.current
       ? false
@@ -158,6 +160,7 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       resizable: resizableParsed.current,
       removable: removableParsed.current,
       droppableOut: droppableOutParsed.current,
+      mask: maskParsed.current,
       //
       debug: debugParsed.current,
       //

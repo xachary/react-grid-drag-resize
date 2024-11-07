@@ -33,7 +33,6 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const columnEndParsed = useRef(2)
   const rowStartParsed = useRef(1)
   const rowEndParsed = useRef(2)
-  const maskParsed = useRef<boolean | undefined>()
   const dragHandlerParsed = useRef<string | undefined>()
   const dropOutHandlerParsed = useRef<string | undefined>()
   const removeHandlerParsed = useRef<string | undefined>()
@@ -42,6 +41,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const draggableParsed = useRef<boolean | undefined>()
   const resizableParsed = useRef<boolean | undefined>()
   const removableParsed = useRef<boolean | undefined>()
+  const maskParsed = useRef<boolean | undefined>()
   const droppableOutParsed = useRef<boolean | undefined>()
   const debugParsed = useRef<boolean | undefined>()
   const parentPropsParsed = useRef<GridDragResizeProps | undefined>()
@@ -50,6 +50,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const draggableDefault = useRef<boolean | undefined>()
   const resizableDefault = useRef<boolean | undefined>()
   const removableDefault = useRef<boolean | undefined>()
+  const maskDefault = useRef<boolean | undefined>()
   const droppableOutDefault = useRef<boolean | undefined>()
 
   useEffect(() => {
@@ -81,6 +82,8 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       ? false
       : (props.removable ?? props.parentProps?.removable)
     removableDefault.current = removableParsed.current ?? true
+    maskParsed.current = props.mask ?? props.parentProps?.mask
+    maskDefault.current = maskParsed.current ?? false
     droppableOutParsed.current = readonlyParsed.current
       ? false
       : (props.droppableOut ?? props.parentProps?.droppableOut)
@@ -106,7 +109,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const [rowEndState, setRowEndState] = useState(rowEndParsed.current)
   const [rowsState, setRowsState] = useState(rowsParsed.current)
   const [columnsState, setColumnsState] = useState(columnsParsed.current)
-  const [maskState, setMaskState] = useState(maskParsed.current)
+  const [maskDefaultState, setMaskDefaultState] = useState(maskDefault.current)
 
   // Props 的 useState 默认值处理
   useEffect(() => {
@@ -121,6 +124,9 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   useEffect(() => {
     setRemovableDefaultState(removableParsed.current ?? true)
   }, [props.removable, props.parentProps?.removable])
+  useEffect(() => {
+    setMaskDefaultState(maskParsed.current ?? false)
+  }, [props.mask, props.parentProps?.mask])
   useEffect(() => {
     setOverflowState(overflowParsed.current)
   }, [props.overflow, props.parentProps?.overflow])
@@ -148,9 +154,6 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   useEffect(() => {
     setColumnsState(columnsParsed.current)
   }, [props.columns])
-  useEffect(() => {
-    setMaskState(maskParsed.current ?? false)
-  }, [props.mask])
 
   // Dom
   const itemEle = useRef<HTMLDivElement | null>(null)
@@ -165,7 +168,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
 
   useEffect(() => {
     setMaskEleState(maskEle.current)
-  }, [maskState])
+  }, [maskDefaultState])
 
   // 下发父配置
   const [parentPropsState, setParentPropsState] = useState(parentPropsParsed.current)
@@ -185,6 +188,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       draggable: draggableParsed.current,
       resizable: resizableParsed.current,
       removable: removableParsed.current,
+      mask: maskParsed.current,
       droppableIn: props.droppableIn,
       droppableOut: droppableOutParsed.current,
       //
@@ -228,7 +232,9 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
   const [hoverEleState, setHoverEleState] = useState(context?.state.hoverEle)
   const [hoverState, setHoverState] = useState(hoverEleState === itemEleState)
   useEffect(() => {
-    setHoverState(hoverEleState === itemEleState || hoverEleState === maskEleState)
+    setHoverState(
+      hoverEleState !== void 0 && (hoverEleState === itemEleState || hoverEleState === maskEleState)
+    )
   }, [hoverEleState, itemEleState, maskEleState])
   useEffect(() => {
     setHoverEleState(context?.state.hoverEle)
@@ -603,7 +609,7 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
           props.render?.(props)
         )}
       </div>
-      {maskState && (
+      {maskDefaultState && (
         <div
           className="grid-drag-resize__item__mask"
           onMouseDown={(e: React.MouseEvent<HTMLElement, MouseEvent>) =>
