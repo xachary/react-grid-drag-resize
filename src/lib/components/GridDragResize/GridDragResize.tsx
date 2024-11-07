@@ -650,7 +650,11 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
           i += more
         }
 
-        const start = i
+        let start = i
+
+        if (!expandable && start + span > max + 1) {
+          start = max + 1 - span
+        }
 
         return {
           start: start,
@@ -731,7 +735,11 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
         i += more
       }
 
-      const start = i + 1
+      let start = i + 1
+
+      if (!expandable && start + span > max + 1) {
+        start = max + 1 - span
+      }
 
       return {
         start,
