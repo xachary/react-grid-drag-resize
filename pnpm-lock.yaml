@@ -15,8 +15,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       react-grid-drag-resize:
-        specifier: ^0.12.3
-        version: 0.12.3
+        specifier: ^0.12.4
+        version: 0.12.4
     devDependencies:
       '@commitlint/cli':
         specifier: 19.2.1
@@ -1775,8 +1775,8 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  react-grid-drag-resize@0.12.3:
-    resolution: {integrity: sha512-n9+tRQy4AUmil/R9ymg0YrTI9ubQfgNb66vSsfB26f1w24f0aLAXNwJXRJ+T/PPkRuAUr/iZ4EEK5hB+PbAftQ==}
+  react-grid-drag-resize@0.12.4:
+    resolution: {integrity: sha512-Mqc5yAK0KTn3Row8YyA2V/dOdzP0bmbzln7096/s1S8e3EGW0EpPr7/6Zg+fjsGEM+MblgqiRFZLfnaB8fhNhA==}
 
   react-refresh@0.14.2:
     resolution: {integrity: sha512-jCvmsr+1IUSMUyzOkRcvnVbX3ZYC6g9TDrDbFuFmRDq7PD4yaGbLKNQL6k2jnArV8hjYxh7hVhAZB6s9HDGpZA==}
@@ -3844,7 +3844,7 @@ snapshots:
       react: 18.3.1
       scheduler: 0.23.2
 
-  react-grid-drag-resize@0.12.3:
+  react-grid-drag-resize@0.12.4:
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
