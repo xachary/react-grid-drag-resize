@@ -195,7 +195,32 @@ export default function GridDragResizeItem(props: GridDragResizeItemComponent) {
       debug: debugParsed.current,
     }
     setParentPropsState(parentProps.current)
-  }, [props])
+  }, [
+    props.dragHandler,
+    props.parentProps?.dragHandler,
+    props.dropOutHandler,
+    props.parentProps?.dropOutHandler,
+    props.removeHandler,
+    props.parentProps?.removeHandler,
+    props.overflow,
+    props.parentProps?.overflow,
+    props.readonly,
+    props.parentProps?.readonly,
+    props.draggable,
+    props.parentProps?.draggable,
+    props.resizable,
+    props.parentProps?.resizable,
+    props.removable,
+    props.parentProps?.removable,
+    props.mask,
+    props.parentProps?.mask,
+    props.droppableIn,
+    props.parentProps?.droppableIn,
+    props.droppableOut,
+    props.parentProps?.droppableOut,
+    props.debug,
+    props.parentProps?.debug,
+  ])
 
   // 调试
   if (debugParsed.current) {

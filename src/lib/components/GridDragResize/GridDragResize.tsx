@@ -172,7 +172,38 @@ function GridDragResizeWithTagName(props: GridDragResizeComponent) {
       tagName: TagNameParsed.current,
     }
     setParentPropsState(parentProps.current)
-  }, [props])
+  }, [
+    props.dragHandler,
+    props.parentProps?.dragHandler,
+    props.dropOutHandler,
+    props.parentProps?.dropOutHandler,
+    props.removeHandler,
+    props.parentProps?.removeHandler,
+    props.overflow,
+    props.parentProps?.overflow,
+    props.readonly,
+    props.parentProps?.readonly,
+    props.draggable,
+    props.parentProps?.draggable,
+    props.resizable,
+    props.parentProps?.resizable,
+    props.removable,
+    props.parentProps?.removable,
+    props.droppableOut,
+    props.parentProps?.droppableOut,
+    props.mask,
+    props.parentProps?.mask,
+    props.debug,
+    props.parentProps?.debug,
+    props.droppableIn,
+    props.parentProps?.droppableIn,
+    props.beforeDrop,
+    props.parentProps?.beforeDrop,
+    props.suffixClass,
+    props.parentProps?.suffixClass,
+    props.tagName,
+    props.parentProps?.tagName,
+  ])
 
   // 调试
   if (debugParsed.current) {
